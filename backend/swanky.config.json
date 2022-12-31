@@ -1,0 +1,55 @@
+{
+  "node": {
+    "localPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/bin/swanky-node",
+    "polkadotPalletVersions": "polkadot-v0.9.27",
+    "supportedInk": "v3.3.1"
+  },
+  "accounts": [
+    {
+      "alias": "alice",
+      "mnemonic": "//Alice",
+      "isDev": true,
+      "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+    },
+    {
+      "alias": "bob",
+      "mnemonic": "//Bob",
+      "isDev": true,
+      "address": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"
+    }
+  ],
+  "contracts": {
+    "proposal_manager": {
+      "name": "proposal_manager",
+      "deployments": [],
+      "language": "ink",
+      "build": {
+        "timestamp": 1671574883669,
+        "artifactsPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/artifacts/proposal_manager/1671574883669"
+      }
+    },
+    "dao_core": {
+      "name": "dao_core",
+      "language": "ink",
+      "deployments": [],
+      "build": {
+        "timestamp": 1671858048560,
+        "artifactsPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/artifacts/dao_core/1671858048560"
+      }
+    }
+  },
+  "networks": {
+    "local": {
+      "url": "ws://127.0.0.1:9944"
+    },
+    "astar": {
+      "url": "wss://rpc.astar.network"
+    },
+    "shiden": {
+      "url": "wss://rpc.shiden.astar.network"
+    },
+    "shibuya": {
+      "url": "wss://rpc.shibuya.astar.network"
+    }
+  }
+}
