@@ -50,14 +50,38 @@ mod dao_core {
             })
         }
 
+        // todo: hashmapの実装例を見ると改善出来る気がする。idが不要？
         #[ink(message)]
-        pub fn install_software(software_info:SoftwareInfo, target_proposal_id:u128) -> Result<()> {
-
+        pub fn get_installed_software(&self) -> Vec<SoftwareInfo> {
+            let mut result:Vec<SoftwareInfo> = Vec::new();
+            for i in 0..self.software_id {
+                match self.installed_software_list_with_id(&i) {
+                    Some(value) => result.push(value),
+                    None => (),
+                }
+            }
+            result
         }
 
         #[ink(message)]
-        pub fn update_software(software_info:SoftwareInfo, target_proposal_id:u128) -> Result<()> {
-            
+        pub fn execute_interface(&mut self,){
+            // アドレスがわかっている状態で、関数インターフェースの異なる他のコントラクトを呼び出せるかテストする。
+        }
+
+        #[ink(message)]
+        pub fn install_software(&mut self, target_proposal_id:u128) -> Result<()> {
+            Ok()
+        }
+
+        #[ink(message)]
+        pub fn uninstall_software(&mut self, target_proposal_id:u128) -> Result<()> {
+            Ok()
+        }
+
+        #[inline]
+        fn _check_software_interface(interface_list: Vec<String>) -> Result<()> {
+            // 各softwareのexecute_interfaceの存在の有無を確認する。
+            Ok()
         }
     }
 

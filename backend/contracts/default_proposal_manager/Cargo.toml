@@ -1,5 +1,5 @@
 [package]
-name = "dao_core"
+name = "default_proposal_manager"
 version = "0.1.0"
 authors = ["shin.takahashi"]
 edition = "2021"
@@ -18,9 +18,12 @@ scale-info = { version = "2", default-features = false, features = ["derive"], o
 
 # add own
 openbrush = {tag = "v2.3.0",  git = "https://github.com/Supercolony-net/openbrush-contracts", default-features = false, features = ["ownable"] }
+contract_helper = { path = "../../logics", default-features = false }
+
+[dev_dependencies]
 
 [lib]
-name = "dao_core"
+name = "default_proposal_manager"
 path = "src/lib.rs"
 crate-type = [
 	# Used for normal contract Wasm blobs.
@@ -37,5 +40,6 @@ std = [
     "scale/std",
     "scale-info/std",
     "openbrush/std",
+    "contract_helper/std",
 ]
 ink-as-dependency = []

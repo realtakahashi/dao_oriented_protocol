@@ -33,8 +33,17 @@
       "language": "ink",
       "deployments": [],
       "build": {
-        "timestamp": 1671858048560,
-        "artifactsPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/artifacts/dao_core/1671858048560"
+        "timestamp": 1673054448169,
+        "artifactsPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/artifacts/dao_core/1673054448169"
+      }
+    },
+    "default_proposal_manager": {
+      "name": "default_proposal_manager",
+      "language": "ink",
+      "deployments": [],
+      "build": {
+        "timestamp": 1674168358846,
+        "artifactsPath": "/Users/shin.takahashi/develop/dao/dao4.commons.2.0/backend/artifacts/default_proposal_manager/1674168358846"
       }
     }
   },
