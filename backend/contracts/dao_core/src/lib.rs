@@ -28,26 +28,12 @@ mod dao_core {
         installed_software_list_with_address: Mapping<AccountId,SoftwareInfo>,
         installed_software_list_with_id: Mapping<u128, SoftwareInfo>,
         software_id: u128,
-        proposal_address: AccountId,
-        member_address: AccountId,
-        voting_address: AccountId,
     }
 
     impl DaoCore {
         #[ink(constructor)]
-        pub fn new(proposal_software:SoftwareInfo, member_software:SoftwareInfo, voting_software:SoftwareInfo) -> Self {
-            ink_lang::utils::initialize_contract(|instance: &mut Self| {
-                self.installed_software_list_with_address.insert(&proposal_software.contract_address, &proposal_software);
-                self.installed_software_list_with_address.insert(&member_software.contract_address, &member_software);
-                self.installed_software_list_with_address.insert(&voting_software.contract_address, &voting_software);
-                self.software_id = 0;
-                self.installed_software_list_with_id.insert(&self.software_id, &proposal_software);
-                self.software_id += 1;
-                self.installed_software_list_with_id.insert(&self.software_id, &member_software);
-                self.software_id += 1;
-                self.installed_software_list_with_id.insert(&self.software_id, &voting_software);
-                self.software_id += 1;
-            })
+        pub fn new() -> Self {
+            ink_lang::utils::initialize_contract(|instance: &mut Self| {})
         }
 
         // todo: hashmapの実装例を見ると改善出来る気がする。idが不要？
@@ -55,7 +41,7 @@ mod dao_core {
         pub fn get_installed_software(&self) -> Vec<SoftwareInfo> {
             let mut result:Vec<SoftwareInfo> = Vec::new();
             for i in 0..self.software_id {
-                match self.installed_software_list_with_id(&i) {
+                match self.installed_software_list_with_id.get(&i) {
                     Some(value) => result.push(value),
                     None => (),
                 }
