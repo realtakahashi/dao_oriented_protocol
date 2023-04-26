@@ -5,10 +5,11 @@ use ink::prelude::string::String;
 pub enum ContractBaseError {
     CommnadNotFound,
     ParameterInvalid,
-    IsAlreadySetDaoAddress,
     InvalidCallingFromOrigin,
     TragetDataNotFound,
     ContractNotFound,
-    DaoAddressNotFound,
+    TheAddressNotFound,
+    SetTheAddressOnlyOnece,
+    CommunicationBaseContractAddressIsNotSet,
     Custom(String),
 }

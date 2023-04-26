@@ -12,6 +12,7 @@ pub mod default_contract {
     pub struct DefaultContract {
         dao_address: Option<AccountId>,
         command_list: Vec<String>,
+        is_enable: bool,
     }
 
     impl ContractBase for DefaultContract {
@@ -25,7 +26,7 @@ pub mod default_contract {
             let return_value:Vec<Vec<u8>> = Vec::new();
             return_value
         }
-
+    
         fn _set_dao_address_impl(
             &mut self,
             dao_address: AccountId,
@@ -42,6 +43,7 @@ pub mod default_contract {
             &mut self,
             command: String,
             _vec_of_parameters: Vec<String>,
+            _caller: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
                 "test_function" => self._test_function(),
@@ -49,6 +51,10 @@ pub mod default_contract {
             }
         }
 
+        fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
+            self.is_enable = true;
+            Ok(())
+        }
     }
 
     impl DefaultContract {
@@ -59,7 +65,8 @@ pub mod default_contract {
                 dao_address: None,
                 command_list: [
                     "test_function".to_string(),
-                ].to_vec(),            
+                ].to_vec(),
+                is_enable: false,            
             }
         }
 

@@ -1,6 +1,7 @@
 use ink::prelude::{ vec, vec::Vec };
 use ink::prelude::string::{ String, ToString };
 use openbrush::traits::AccountId;
+pub use crate::traits::errors::contract_error::ContractBaseError;
 
 #[inline]
 pub fn convert_string_to_accountid(account_str: &str) -> Option<AccountId> {
@@ -28,5 +29,19 @@ pub fn change_csv_string_to_vec_of_string(parameters_csv: String) ->Vec<String> 
             rec.push(parameters_csv);
             rec
         }
+    }
+}
+
+pub fn convert_string_to_u128(string_value:&String) -> Result<u128,ContractBaseError> {
+    match u128::from_str_radix(string_value.as_str(), 10) {
+        Ok(value) => Ok(value),
+        Err(_e) => return Err(ContractBaseError::ParameterInvalid),
+    }
+}
+
+pub fn convert_string_to_u8(string_value:&String) -> Result<u8,ContractBaseError> {
+    match u8::from_str_radix(string_value.as_str(), 10) {
+        Ok(value) => Ok(value),
+        Err(_e) => return Err(ContractBaseError::ParameterInvalid),
     }
 }

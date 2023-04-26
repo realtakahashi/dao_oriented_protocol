@@ -22,6 +22,18 @@ pub mod communication_base {
             let instance: DefaultContractRef = ink::env::call::FromAccountId::from_account_id(target_contract);
             instance.get_data(target_function)
         }
+
+        #[ink(message)]
+        pub fn call_execute_interface_of_function(
+            &mut self,
+            target_contract: AccountId,
+            command: String,
+            parameter_csv: String,
+        ) -> core::result::Result<(), ContractBaseError> {
+            let mut instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(target_contract);
+            instance.execute_interface(command, parameter_csv, self.env().caller())
+        }
     }
 
 }

@@ -2,23 +2,29 @@
 
 #[openbrush::contract]
 mod default_member {
+    use communication_base::communication_base::CommunicationBaseRef;
+    use contract_helper::common::common_logics;
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
-    use contract_helper::common::common_logics;
+    use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
     use openbrush::storage::Mapping;
-    use ink::storage::traits::StorageLayout;
-    use communication_base::communication_base::{CommunicationBase, CommunicationBaseRef};
-    use scale::{ Encode, Decode };
+    use scale::{Decode, Encode};
 
     #[ink(storage)]
+    #[derive(Default)]
     pub struct DefaultMember {
         member_list_with_id: Mapping<u128, MemberInfo>,
+        member_list_with_eoa: Mapping<AccountId, MemberInfo>,
         next_member_id: u128,
         dao_address: Option<AccountId>,
         command_list: Vec<String>,
-        communication_base_ref: AccountId,
+        communication_base_ref: Option<AccountId>,
+        is_enable: bool,
+        proposal_manager_address: Option<AccountId>,
+        election_commisioner_list: Mapping<u128, AccountId>,
+        next_commisioner_id: u128,
     }
 
     impl ContractBase for DefaultMember {
@@ -36,6 +42,12 @@ mod default_member {
                     for value in list.iter() {
                         result.push(value.encode());
                     }
+                },
+                "get_election_commisioner_list" => {
+                    let list: Vec<MemberInfo> = self.get_election_commisioner_list();
+                    for value in list.iter() {
+                        result.push(value.encode());
+                    }
                 }
                 _ => (),
             }
@@ -46,7 +58,10 @@ mod default_member {
             &mut self,
             dao_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            self.dao_address = Some(dao_address);
+            match self.dao_address {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => self.dao_address = Some(dao_address),
+            }
             Ok(())
         }
 
@@ -58,34 +73,92 @@ mod default_member {
             &mut self,
             command: String,
             vec_of_parameters: Vec<String>,
+            caller: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
-                "add_member" => self._add_member(vec_of_parameters),
-                "delete_member" => self._delete_member(vec_of_parameters),
+                "add_member" => self._add_member(vec_of_parameters, caller),
+                "delete_member" => self._delete_member(vec_of_parameters, caller),
+                "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                "set_dao_address" => self._set_dao_address(vec_of_parameters),
+                "change_election_commisioner" => self._change_election_commisioner(vec_of_parameters),
+                "update_proposal_manager_address" => self._update_proposal_manager_address(vec_of_parameters),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
+        }
+
+        fn _change_enable_or_not(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            // todo: これはMember Managerではワークししない。理由はMemberManagerが存在しない状態ではProposalがワークしないから
+            // todo: 初期MemberManagerはバンドルのような扱いにするしかないか。
+            // todo: ただこのロジックは、アプリケーション固有の機能実装の時に役立つ
+            match self.dao_address {
+                Some(value) => {
+                    if !self._modifier_only_call_from_dao(value) {
+                        return Err(ContractBaseError::InvalidCallingFromOrigin);
+                    }
+                },
+                None => return Err(ContractBaseError::TheAddressNotFound),
+            };
+            match vec_of_parameters.len() {
+                1 => {
+                    let proposal_id = match vec_of_parameters[0].parse::<u128>() {
+                        Ok(value) => value,
+                        Err(_) => return Err(ContractBaseError::ParameterInvalid),
+                    };
+                    let proposal_info = match self._get_proposal_info(proposal_id) {
+                        Ok(value) => value,
+                        Err(_) => {
+                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+                        }
+                    };
+                    match self._valid_proposal_info_for_change_enabel_or_not(&proposal_info) {
+                        true => (),
+                        false => {
+                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+                        }
+                    };
+                    let vec_of_params =
+                        common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
+                    match vec_of_params.len() {
+                        1 => match bool::from_str(&vec_of_params[0]) {
+                            Ok(value) => self.is_enable = value,
+                            Err(_) => {
+                                return Err(ContractBaseError::Custom(
+                                    "Invalid Proposal.".to_string(),
+                                ))
+                            }
+                        },
+                        _ => {
+                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+                        }
+                    };
+                }
+                _ => return Err(ContractBaseError::ParameterInvalid),
+            }
+            Ok(())
         }
     }
 
     impl DefaultMember {
         #[ink(constructor)]
-        pub fn new(communication_base_ref:AccountId) -> Self {
-            Self { 
-                member_list_with_id: Mapping::default(),
-                next_member_id: 0,
-                dao_address: None,
-                command_list: [
-                    "add_member".to_string(),
-                    "delete_member".to_string(),
-                ]
-                .to_vec(),
-                communication_base_ref: communication_base_ref,
-             }
+        pub fn new(communication_base_ref: AccountId, owner_name: String) -> Self {
+            let mut instance = Self::default();
+            instance.command_list.push("add_member".to_string());
+            instance.command_list.push("delete_member".to_string());
+            instance.command_list.push("change_enable_or_not".to_string());
+            instance.command_list.push("set_dao_address".to_string());
+            instance.command_list.push("change_election_commisioner".to_string());
+            instance.command_list.push("update_proposal_manager_address".to_string());
+            instance.communication_base_ref = Some(communication_base_ref);
+            instance._add_first_member(owner_name);
+            instance
         }
 
         #[ink(message)]
-        pub fn get_member_list(&self) -> Vec<MemberInfo>{
-            let mut result:Vec<MemberInfo> = Vec::new();
+        pub fn get_member_list(&self) -> Vec<MemberInfo> {
+            let mut result: Vec<MemberInfo> = Vec::new();
             for i in 0..self.next_member_id {
                 match self.member_list_with_id.get(&i) {
                     Some(value) => result.push(value),
@@ -95,104 +168,263 @@ mod default_member {
             result
         }
 
-        fn _add_member(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError> {
+        #[ink(message)]
+        pub fn get_election_commisioner_list(&self)  -> Vec<MemberInfo> {
+            let mut result: Vec<MemberInfo> = Vec::new();
+            for i in 0..self.next_commisioner_id {
+                match self.election_commisioner_list.get(&i) {
+                    Some(address) => {
+                        match self.member_list_with_eoa.get(&address) {
+                            Some(member_info) => result.push(member_info),
+                            None => (),
+                        }
+                    },
+                    None => (),
+                }
+            };
+            result
+        }
+
+        #[ink(message)]
+        pub fn set_proposal_manager_address(&mut self, proposal_manager_address: AccountId) -> core::result::Result<(), ContractBaseError> {
+            match self.proposal_manager_address {
+                Some(_value) => return Err(ContractBaseError::TheAddressNotFound),
+                None => self.proposal_manager_address = Some(proposal_manager_address),
+            }
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_proposal_manager_address(&self) -> Option<AccountId> {
+            self.proposal_manager_address
+        }
+
+        fn _update_proposal_manager_address(&mut self)  -> core::result::Result<(), ContractBaseError> {
+            if _modifier_only_call_from_proposal() == false {
+                return Err(ContractBaseError::InvalidCallingFromOrigin);
+            }
+            if vec_of_parameters.len() != 1{
+                return Err(ContractBaseError::ParameterInvalid);
+            }
+            let address = match common_logics::convert_string_to_accountid(vec_of_parameters[0]) {
+                Some(value) => value,
+                None => return Err(ContractBaseError::ParameterInvalid),
+            };
+            self.proposal_manager_address = Some(address);
+            Ok(())
+        }
+
+        /// change election commisioner
+        /// params: list of account id
+        fn _change_election_commisioner(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_proposal() == false {
+                return Err(ContractBaseError::InvalidCallingFromOrigin);
+            }
+            if vec_of_parameters.len() < 1 {
+                return Err(ContractBaseError::ParameterInvalid);
+            }
+            let mut address_list: Vec<AccountId> = Vec::new();
+            for address_string in vec_of_parameters.iter() {
+                match common_logics::convert_string_to_accountid(address_string) {
+                    Some(value) => address_list.push(value),
+                    None => return Err(ContractBaseError::ParameterInvalid),
+                };
+            };
+            for i in 0 .. self.next_commisioner_id {
+                self.election_commisioner_list.remove(&i);
+            }
+            self.next_commisioner_id = 0;
+            for address in address_list.iter() {
+                self.election_commisioner_list.insert(&self.next_commisioner_id, address);
+                self.next_commisioner_id += 1;
+            }
+
+            Ok(())
+        }
+
+        fn _add_first_member(&mut self, owner_name: String) {
+            let caller = self.env().caller();
+            let member_info: MemberInfo = MemberInfo {
+                id: self.next_member_id,
+                name: owner_name, 
+                address: caller,
+            };
+            self.member_list_with_id
+                .insert(&self.next_member_id, &member_info);
+            self.member_list_with_eoa.insert(&caller, &member_info);
+            self.next_member_id += 1;
+
+            self.election_commisioner_list.insert(&self.next_commisioner_id, &caller);
+            self.next_commisioner_id += 1;
+        }
+
+        fn _add_member(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+            caller: AccountId
+        ) -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_proposal() == false {
+                return Err(ContractBaseError::InvalidCallingFromOrigin);
+            }
+            if self._modifier_only_call_from_member_eoa(caller) == false {
+                return Err(ContractBaseError::Custom("Only Member does.".to_string()));
+            }
             match self.dao_address {
                 Some(value) => {
-                    if !self._modifier_only_call_from_dao(value){
-                        return Err(ContractBaseError::InvalidCallingFromOrigin);
-                    }
+                    // if !self._modifier_only_call_from_dao(value) {
+                    //     return Err(ContractBaseError::InvalidCallingFromOrigin);
+                    // }
                     match vec_of_parameters.len() {
                         1 => {
-                            let proposal_id = match vec_of_parameters[0].parse::<u128>(){
+                            let proposal_id = match vec_of_parameters[0].parse::<u128>() {
                                 Ok(value) => value,
                                 Err(_) => return Err(ContractBaseError::ParameterInvalid),
                             };
                             self._add_member_impl(proposal_id)
-                        },
+                        }
                         _ => Err(ContractBaseError::ParameterInvalid),
                     }
-                },
-                None => return Err(ContractBaseError::DaoAddressNotFound),
+                }
+                None => return Err(ContractBaseError::TheAddressNotFound),
             }
         }
 
         /// Parameter csv data must have two values.
         /// <Member Name> , <Member Address>
-        fn _add_member_impl(&mut self, proposal_id:u128) -> core::result::Result<(), ContractBaseError> {
+        fn _add_member_impl(
+            &mut self,
+            proposal_id: u128,
+        ) -> core::result::Result<(), ContractBaseError> {
             let proposal_info = match self._get_proposal_info(proposal_id) {
                 Ok(value) => value,
                 Err(_) => return Err(ContractBaseError::Custom("Invalid Proposal.".to_string())),
             };
             match self._valid_proposal_info_for_add(&proposal_info) {
                 true => {
-                    let param_vec = common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
+                    let param_vec =
+                        common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
                     if param_vec.len() != 2 {
                         return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()));
                     }
-                    let member_address = match common_logics::convert_string_to_accountid(&param_vec[1]) {
-                        Some(value) => value,
-                        None => return Err(ContractBaseError::Custom("Invalid Proposal.".to_string())),
-                    };
+                    let member_address =
+                        match common_logics::convert_string_to_accountid(&param_vec[1]) {
+                            Some(value) => value,
+                            None => {
+                                return Err(ContractBaseError::Custom(
+                                    "Invalid Proposal.".to_string(),
+                                ))
+                            }
+                        };
                     let member_info: MemberInfo = MemberInfo {
                         id: self.next_member_id,
                         name: param_vec[0].clone(),
                         address: member_address,
                     };
-                    self.member_list_with_id.insert(&self.next_member_id, &member_info);
+                    self.member_list_with_id
+                        .insert(&self.next_member_id, &member_info);
+                    self.member_list_with_eoa.insert(&member_address, &member_info);
                     self.next_member_id += 1;
+                    // todo: prposal statusを実行完了に変更する
                     Ok(())
-                },
+                }
                 false => Err(ContractBaseError::Custom("Invalid Proposal.".to_string())),
             }
-                
         }
 
         fn _valid_proposal_info_for_add(&self, proposal_info: &ProposalInfo) -> bool {
-            if proposal_info.target_contract != "default_member" {
-                return false;
+            match proposal_info.status {
+                ProposalStatus::Executed => (),
+                _ => return false,
             }
-            if proposal_info.target_function != "add_member" {
-                return false;
+            match proposal_info.target_function.as_str() {
+                "add_member" => true,
+                _ => false,
             }
-            true
         }
 
-        // todo: 
-        //  どうやって、default_proposalのアドレスをこのコントラクトに連携させるか？
-        //  本来はソフトウェアとしての一体感が欲しい。
-        fn _get_proposal_address(&self) -> Option<AccountId> {
-            None
+        fn _valid_proposal_info_for_change_enabel_or_not(
+            &self,
+            proposal_info: &ProposalInfo,
+        ) -> bool {
+            match proposal_info.status {
+                ProposalStatus::Executed => (),
+                _ => return false,
+            }
+            match proposal_info.target_function.as_str() {
+                "change_enable_or_not" => true,
+                _ => false,
+            }
         }
 
-
-        pub fn _get_proposal_info(&self, proposal_id: u128) -> core::result::Result<ProposalInfo, ContractBaseError> {
-            let proposal_address = match self._get_proposal_address() {
+        fn _get_proposal_info(
+            &self,
+            proposal_id: u128,
+        ) -> core::result::Result<ProposalInfo, ContractBaseError> {
+            let com_address = match self.communication_base_ref {
                 Some(value) => value,
-                None => return Err(ContractBaseError::Custom("Getting proposal address is failure.".to_string())),
+                None => return Err(ContractBaseError::CommunicationBaseContractAddressIsNotSet),
             };
-            let mut instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            let get_value: Vec<Vec<u8>> = instance
-                .get_data_from_contract(proposal_address, "get_proposal_info_list".to_string());
-            for value in get_value.iter() {
-                let mut array_value: &[u8] = value.as_slice().try_into().unwrap();
-                match ProposalInfo::decode(&mut array_value.clone()) {
-                    Ok(value) => {
-                        if value.id == proposal_id {
-                            return Ok(value);
-                        }
-                    },
-                    Err(_) => return Err(ContractBaseError::Custom("Getting proposal info is failure.".to_string())),
-                };
-            };
-            Err(ContractBaseError::Custom("No matching proposals found.".to_string()))
+            match self.proposal_manager_address {
+                Some(proposal_address) => {
+                    let instance: CommunicationBaseRef =
+                        ink::env::call::FromAccountId::from_account_id(com_address);
+                    let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
+                        proposal_address,
+                        "get_proposal_info_list".to_string(),
+                    );
+                    for value in get_value.iter() {
+                        let array_value: &[u8] = value.as_slice().try_into().unwrap();
+                        match ProposalInfo::decode(&mut array_value.clone()) {
+                            Ok(value) => {
+                                if value.id == proposal_id {
+                                    return Ok(value);
+                                }
+                            }
+                            Err(_) => {
+                                return Err(ContractBaseError::Custom(
+                                    "Getting proposal info is failure.".to_string(),
+                                ))
+                            }
+                        };
+                    }
+                    Err(ContractBaseError::Custom(
+                        "No matching proposals found.".to_string(),
+                    ))
+                }
+                None => {
+                    return Err(ContractBaseError::Custom(
+                        "proposals manager never set.".to_string(),
+                    ))
+                }
+            }
         }
 
-        fn _delete_member(&self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError> {
-            
+        fn _delete_member(
+            &self,
+            vec_of_parameters: Vec<String>,
+            caller: AccountId
+        ) -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_proposal() == false {
+                return Err(ContractBaseError::InvalidCallingFromOrigin);
+            }
+            if self._modifier_only_call_from_member_eoa(caller) == false {
+                return Err(ContractBaseError::Custom("Only Member does.".to_string()));
+            }
+
+            // todo: 未実装
             Ok(())
         }
 
+        fn _modifier_only_call_from_member_eoa(&self, caller:AccountId) -> bool {
+            match self.member_list_with_eoa.get(&caller) {
+                Some(_value) => true,
+                None => false,
+            }
+        }
+
+        fn _modifier_only_call_from_proposal(&self) -> bool {
+            self.proposal_manager_address == Some(self.env().caller())
+        }
     }
 
     #[cfg(test)]

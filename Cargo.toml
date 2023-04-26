@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "backend/contracts/application_core",
+    "backend/contracts/communication_base",
+    "backend/contracts/default_contract",
+    "backend/contracts/default_election",
+    "backend/contracts/default_member",
+    "backend/contracts/default_proposal",
+    "backend/logics",
+]
