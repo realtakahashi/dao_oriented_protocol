@@ -22,7 +22,7 @@ pub mod default_contract {
         }
 
         #[ink(message)]
-        fn get_data(&self,target_function:String) -> Vec<Vec<u8>> {
+        fn get_data(&self,_target_function:String) -> Vec<Vec<u8>> {
             let return_value:Vec<Vec<u8>> = Vec::new();
             return_value
         }
@@ -51,10 +51,10 @@ pub mod default_contract {
             }
         }
 
-        fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
-            self.is_enable = true;
-            Ok(())
-        }
+        // fn _change_enable_or_not(&mut self, _vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
+        //     self.is_enable = true;
+        //     Ok(())
+        // }
     }
 
     impl DefaultContract {

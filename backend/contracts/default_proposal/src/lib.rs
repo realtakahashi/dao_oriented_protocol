@@ -5,10 +5,11 @@ mod default_proposal {
     use communication_base::communication_base::CommunicationBaseRef;
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
-    use contract_helper::traits::types::types::{*, MemberInfo};
+    use contract_helper::traits::types::types::{MemberInfo, *, ProposalStatus};
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
     // use ink::storage::traits::StorageLayout;
+    use core::str::FromStr;
     use openbrush::storage::Mapping;
     use scale::{Decode, Encode};
 
@@ -81,43 +82,40 @@ mod default_proposal {
             match command.as_str() {
                 "add_proposal" => self._add_proposal(vec_of_parameters, caller),
                 "change_proposal_status" => self._change_proposal_status(vec_of_parameters, caller),
-                "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
                 "execute_proposal" => self._execute_proposal(vec_of_parameters),
                 "set_dao_address" => self._set_dao_address(vec_of_parameters),
+                "change_proposal_status_from_election" => self._change_proposal_status_from_election(vec_of_parameters),
                 // "update_member_manager" => self._update_member_manager(vec_of_parameters),
                 // "update_election" => self._update_election(vec_of_parameters),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
         }
 
-        /// [private] change status whether this contract can use
-        fn _change_enable_or_not(
-            &mut self,
-            vec_of_parameters: Vec<String>,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.dao_address {
-                Some(value) => {
-                    if !self._modifier_only_call_from_dao(value) {
-                        return Err(ContractBaseError::InvalidCallingFromOrigin);
-                    }
-                }
-                None => return Err(ContractBaseError::TheAddressNotFound),
-            };
-            match vec_of_parameters.len() == 1 {
-                true => {
-                    match bool::from_str(&vec_of_parameters[0]) {
-                        Ok(value) => {
-                            self.is_enable = value;
-                            Ok(())
-                        },
-                        Err(_) => {
-                            return Err(ContractBaseError::ParameterInvalid),
-                        }
-                    }
-                },
-                false => return Err(ContractNotFound::ParameterInvalid),
-            }
-        }
+        // /// [private] change status whether this contract can use
+        // fn _change_enable_or_not(
+        //     &mut self,
+        //     vec_of_parameters: Vec<String>,
+        // ) -> core::result::Result<(), ContractBaseError> {
+        //     match self.dao_address {
+        //         Some(value) => {
+        //             if !self._modifier_only_call_from_dao(value) {
+        //                 return Err(ContractBaseError::InvalidCallingFromOrigin);
+        //             }
+        //         }
+        //         None => return Err(ContractBaseError::TheAddressNotFound),
+        //     };
+        //     match vec_of_parameters.len() == 1 {
+        //         true => match bool::from_str(&vec_of_parameters[0]) {
+        //             Ok(value) => {
+        //                 self.is_enable = value;
+        //                 Ok(())
+        //             }
+        //             Err(_) => return Err(ContractBaseError::ParameterInvalid),
+        //         },
+        //         false => return Err(ContractBaseError::ParameterInvalid),
+        //     }
+        // }
     }
 
     impl DefaultProposal {
@@ -137,16 +135,21 @@ mod default_proposal {
                     "set_dao_address".to_string(),
                     "update_member_manager".to_string(),
                     "update_election".to_string(),
+                    "change_proposal_status_from_election".to_string(),
                 ]
                 .to_vec(),
                 member_manager_address: None,
                 communication_base_ref: communication_base_ref,
+                is_enable: false,
             }
         }
 
         /// set member manager address
         #[ink(message)]
-        pub fn set_member_manager_address(&mut self, member_manager_address: AccountId)-> core::result::Result<(), ContractBaseError> {
+        pub fn set_member_manager_address(
+            &mut self,
+            member_manager_address: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
             match self.member_manager_address {
                 Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
                 None => self.member_manager_address = Some(member_manager_address),
@@ -156,7 +159,10 @@ mod default_proposal {
 
         /// set election address
         #[ink(message)]
-        pub fn set_election_address(&mut self, election_address: AccountId) -> core::result::Result<(), ContractBaseError>{
+        pub fn set_election_address(
+            &mut self,
+            election_address: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
             match self.election_address {
                 Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
                 None => self.election_address = Some(election_address),
@@ -165,11 +171,14 @@ mod default_proposal {
         }
 
         /// update member manager
-        pub fn _update_member_manager(&mut self, vec_of_parameters:Vec<String>) -> core::result::Result<(), ContractBaseError> {
-            if vec_of_parameters.len() != 1{
+        pub fn _update_member_manager(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            if vec_of_parameters.len() != 1 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
-            let address = match common_logics::convert_string_to_accountid(vec_of_parameters[0]) {
+            let address = match common_logics::convert_string_to_accountid(&vec_of_parameters[0]) {
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
@@ -178,11 +187,14 @@ mod default_proposal {
         }
 
         /// update election
-        pub fn _update_election(&mut self, vec_of_parameters:Vec<String>)  -> core::result::Result<(), ContractBaseError>{
-            if vec_of_parameters.len() != 1{
+        pub fn _update_election(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            if vec_of_parameters.len() != 1 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
-            let address = match common_logics::convert_string_to_accountid(vec_of_parameters[0]) {
+            let address = match common_logics::convert_string_to_accountid(&vec_of_parameters[0]) {
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
@@ -223,31 +235,41 @@ mod default_proposal {
                             Some(value) => value,
                             None => return Err(ContractBaseError::ParameterInvalid),
                         };
-                    if proposal_info.status == ProposalStatus::Executed {
-                        return Err(ContractBaseError::Custom("TheProposalIsNotPassed"));
+                    if proposal_info.status != ProposalStatus::Executed {
+                        return Err(ContractBaseError::Custom(
+                            "TheProposalIsNotPassed".to_string(),
+                        ));
                     }
+                    let parameter = common_logics::change_csv_string_to_vec_of_string(
+                        proposal_info.parameters.clone(),
+                    );
                     match proposal_info.target_contract == self.env().account_id() {
-                        true =>{
-                            match proposal_info.target_function.as_str() {
-                                "update_member_manager" => return self._update_member_manager(proposal_info.parameters.clone()),
-                                "update_election" => return self._update_election(proposal_info.parameters.clone()),
-                                _ => return Err(ContractBaseError::Custom("TheProposalIsInvalid")),
+                        true => match proposal_info.target_function.as_str() {
+                            "update_member_manager" => {
+                                return self._update_member_manager(parameter)
+                            }
+                            "update_election" => return self._update_election(parameter),
+                            _ => {
+                                return Err(ContractBaseError::Custom(
+                                    "TheProposalIsInvalid".to_string(),
+                                ))
                             }
                         },
                         false => {
                             let mut instance: CommunicationBaseRef =
-                                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-                            instance.call_execute_interface_of_function(
+                                ink::env::call::FromAccountId::from_account_id(
+                                    self.communication_base_ref,
+                                );
+                            return instance.call_execute_interface_of_function(
                                 proposal_info.target_contract.clone(),
                                 proposal_info.target_function.clone(),
                                 proposal_info.parameters.clone(),
-                            );    
+                            );
                         }
                     }
                 }
                 _ => return Err(ContractBaseError::ParameterInvalid),
             }
-            Ok(())
         }
 
         /// add proposal
@@ -317,12 +339,12 @@ mod default_proposal {
             };
             self.proposal_list_with_id
                 .insert(&proposal_info.id, &proposal_info);
-            
-            match self._create_vote_or_election(self.next_proposal_id, ProposalStatus::Proposed) {
-                Ok(())=> {
+
+            match self._create_or_end_election(self.next_proposal_id, ProposalStatus::Proposed) {
+                Ok(()) => {
                     self.next_proposal_id += 1;
                     Ok(())
-                },
+                }
                 Err(error) => Err(error),
             }
         }
@@ -360,6 +382,25 @@ mod default_proposal {
             )
         }
 
+        fn _change_proposal_status_from_election(&mut self, vec_of_parameters: Vec<String>)-> core::result::Result<(), ContractBaseError> {
+            if vec_of_parameters.len() != 2 {
+                return Err(ContractBaseError::ParameterInvalid);
+            };
+            let target_proposal_id = match u128::from_str_radix(vec_of_parameters[0].as_str(), 10) {
+                Ok(value) => value,
+                Err(_e) => return Err(ContractBaseError::ParameterInvalid),
+            };
+            let to_status_u8 = match u8::from_str_radix(vec_of_parameters[1].as_str(), 10) {
+                Ok(value) => value,
+                Err(_e) => return Err(ContractBaseError::ParameterInvalid),
+            };
+            self._change_proposal_status_impl(
+                target_proposal_id,
+                self._change_to_status_from_u8(to_status_u8),
+                self.env().caller(),
+            )
+        }
+
         fn _change_proposal_status_impl(
             &mut self,
             target_proposal_id: u128,
@@ -382,7 +423,7 @@ mod default_proposal {
             self.proposal_list_with_id
                 .insert(&proposal_info.id, &proposal_info);
 
-            self._create_vote_or_election(proposal_info.id, to_status)
+            self._create_or_end_election(proposal_info.id, to_status)
         }
 
         fn _check_changing_status_valid(
@@ -404,7 +445,7 @@ mod default_proposal {
                 },
                 ProposalStatus::Proposed => match to_status {
                     ProposalStatus::Voting | ProposalStatus::Denied => {
-                        if self._modifier_only_call_from_member_eoa(caller) == false {
+                        if self._modifier_only_call_from_election_commisioner(caller) == false {
                             return CheckChangingStatus::InvalidCaller;
                         } else {
                             return CheckChangingStatus::Valid;
@@ -414,7 +455,7 @@ mod default_proposal {
                 },
                 ProposalStatus::Voting => match to_status {
                     ProposalStatus::FinishVoting => {
-                        if self._modifier_only_call_from_member_eoa(caller) == false {
+                        if self._modifier_only_call_from_election_commisioner(caller) == false {
                             return CheckChangingStatus::InvalidCaller;
                         } else {
                             return CheckChangingStatus::Valid;
@@ -426,6 +467,15 @@ mod default_proposal {
                     ProposalStatus::Executed | ProposalStatus::Denied => CheckChangingStatus::Valid,
                     _ => CheckChangingStatus::InvalidChangingStatus,
                 },
+                ProposalStatus::Executed => match to_status {
+                    ProposalStatus::Finished => {
+                        match self._modifier_only_call_from_election(){
+                            true => return CheckChangingStatus::Valid,
+                            false => return CheckChangingStatus::InvalidCaller,
+                        }
+                    },
+                    _ => CheckChangingStatus::InvalidChangingStatus,
+                }
                 _ => CheckChangingStatus::InvalidChangingStatus,
             }
         }
@@ -437,6 +487,7 @@ mod default_proposal {
                 3 => ProposalStatus::FinishVoting,
                 4 => ProposalStatus::Executed,
                 5 => ProposalStatus::Denied,
+                6 => ProposalStatus::Finished,
                 _ => ProposalStatus::None,
             }
         }
@@ -450,45 +501,49 @@ mod default_proposal {
         }
 
         /// create vote or election
-        fn _create_or_end_election_(
+        fn _create_or_end_election(
             &self,
             proposal_id: u128,
             to_status: ProposalStatus,
         ) -> core::result::Result<(), ContractBaseError> {
+            let election_address = match self.election_address {
+                Some(value) => value,
+                None => return Err(ContractBaseError::TheAddressNotFound),
+            };
             let mut instance: CommunicationBaseRef =
                 ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
             match to_status {
                 ProposalStatus::Proposed => {
                     return instance.call_execute_interface_of_function(
-                        self.election_address,
-                        "create_election",
+                        election_address,
+                        "create_election".to_string(),
                         proposal_id.to_string(),
-                    );            
-                },
+                    );
+                }
                 ProposalStatus::FinishVoting => {
                     let member_count = match self._get_member_info_list() {
                         Ok(member_list) => member_list.len(),
-                        Err(error) => Err(error),
+                        Err(error) => return Err(error),
                     };
-                    let parameter = proposal_id.to_string() + "," + member_count.to_string();
+                    let parameter = proposal_id.to_string() + "," + &member_count.to_string();
 
                     return instance.call_execute_interface_of_function(
-                        self.election_address,
-                        "end_election",
+                        election_address,
+                        "end_election".to_string(),
                         parameter,
-                    );            
-                },
+                    );
+                }
                 _ => (),
             }
             Ok(())
         }
 
-        fn _modifier_only_call_from_election(&self) -> bool {
-            match self.election_address {
-                Some(value) => value == self.env().caller(),
-                None => false,
-            }
-        }
+        // fn _modifier_only_call_from_election(&self) -> bool {
+        //     match self.election_address {
+        //         Some(value) => value == self.env().caller(),
+        //         None => false,
+        //     }
+        // }
 
         fn _modifier_only_call_from_election_commisioner(&self, caller: AccountId) -> bool {
             let member_manager_address = match self.member_manager_address {
@@ -517,38 +572,37 @@ mod default_proposal {
 
         fn _modifier_only_call_from_member_eoa(&self, caller: AccountId) -> bool {
             match self._get_member_info_list() {
-                Ok(member_list) => member_list.contains(&caller),
-                Err(_) => false,
-            }
-
-            let member_manager_address = match self.member_manager_address {
-                Some(value) => value,
-                None => return false,
-            };
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            let get_value: Vec<Vec<u8>> = instance
-                .get_data_from_contract(member_manager_address, "get_member_list".to_string());
-            for value in get_value.iter() {
-                let array_value: &[u8] = value.as_slice().try_into().unwrap();
-                match MemberInfo::decode(&mut array_value.clone()) {
-                    Ok(value) => {
-                        if value.address == caller {
+                Ok(member_list) => {
+                    for member_info in member_list {
+                        if member_info.address == caller {
                             return true;
-                        }
+                        };
                     }
-                    Err(_) => return false,
-                };
+                }
+                Err(_) => return false,
             }
             false
         }
 
-        fn _get_member_info_list(&self) -> core::result::Result<Vec<MemberInfo>, ContractBaseError> {
+        fn _modifier_only_call_from_election(&self) -> bool {
+            match self.election_address {
+                Some(value) => value == self.env().caller(),
+                None => false,
+            }
+        }
+
+        fn _get_member_info_list(
+            &self,
+        ) -> core::result::Result<Vec<MemberInfo>, ContractBaseError> {
             let member_manager_address = match self.member_manager_address {
                 Some(value) => value,
-                None => Err(ContractBaseError::Custom("MemberManagerAddressIsNotSet")),
+                None => {
+                    return Err(ContractBaseError::Custom(
+                        "MemberManagerAddressIsNotSet".to_string(),
+                    ))
+                }
             };
-            let mut result:Vec<MemberInfo> = Vec::new();
+            let mut result: Vec<MemberInfo> = Vec::new();
             let instance: CommunicationBaseRef =
                 ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
             let get_value: Vec<Vec<u8>> = instance
@@ -557,7 +611,11 @@ mod default_proposal {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match MemberInfo::decode(&mut array_value.clone()) {
                     Ok(value) => result.push(value),
-                    Err(_) => return Err(ContractBaseError::Custom("GotAnErrorGettingMemberInfo")),
+                    Err(_) => {
+                        return Err(ContractBaseError::Custom(
+                            "GotAnErrorGettingMemberInfo".to_string(),
+                        ))
+                    }
                 };
             }
             Ok(result)

@@ -78,7 +78,7 @@ mod default_member {
             match command.as_str() {
                 "add_member" => self._add_member(vec_of_parameters, caller),
                 "delete_member" => self._delete_member(vec_of_parameters, caller),
-                "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
                 "set_dao_address" => self._set_dao_address(vec_of_parameters),
                 "change_election_commisioner" => self._change_election_commisioner(vec_of_parameters),
                 "update_proposal_manager_address" => self._update_proposal_manager_address(vec_of_parameters),
@@ -86,59 +86,59 @@ mod default_member {
             }
         }
 
-        fn _change_enable_or_not(
-            &mut self,
-            vec_of_parameters: Vec<String>,
-        ) -> core::result::Result<(), ContractBaseError> {
-            // todo: これはMember Managerではワークししない。理由はMemberManagerが存在しない状態ではProposalがワークしないから
-            // todo: 初期MemberManagerはバンドルのような扱いにするしかないか。
-            // todo: ただこのロジックは、アプリケーション固有の機能実装の時に役立つ
-            match self.dao_address {
-                Some(value) => {
-                    if !self._modifier_only_call_from_dao(value) {
-                        return Err(ContractBaseError::InvalidCallingFromOrigin);
-                    }
-                },
-                None => return Err(ContractBaseError::TheAddressNotFound),
-            };
-            match vec_of_parameters.len() {
-                1 => {
-                    let proposal_id = match vec_of_parameters[0].parse::<u128>() {
-                        Ok(value) => value,
-                        Err(_) => return Err(ContractBaseError::ParameterInvalid),
-                    };
-                    let proposal_info = match self._get_proposal_info(proposal_id) {
-                        Ok(value) => value,
-                        Err(_) => {
-                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-                        }
-                    };
-                    match self._valid_proposal_info_for_change_enabel_or_not(&proposal_info) {
-                        true => (),
-                        false => {
-                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-                        }
-                    };
-                    let vec_of_params =
-                        common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
-                    match vec_of_params.len() {
-                        1 => match bool::from_str(&vec_of_params[0]) {
-                            Ok(value) => self.is_enable = value,
-                            Err(_) => {
-                                return Err(ContractBaseError::Custom(
-                                    "Invalid Proposal.".to_string(),
-                                ))
-                            }
-                        },
-                        _ => {
-                            return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-                        }
-                    };
-                }
-                _ => return Err(ContractBaseError::ParameterInvalid),
-            }
-            Ok(())
-        }
+        // fn _change_enable_or_not(
+        //     &mut self,
+        //     vec_of_parameters: Vec<String>,
+        // ) -> core::result::Result<(), ContractBaseError> {
+        //     // todo: これはMember Managerではワークししない。理由はMemberManagerが存在しない状態ではProposalがワークしないから
+        //     // todo: 初期MemberManagerはバンドルのような扱いにするしかないか。
+        //     // todo: ただこのロジックは、アプリケーション固有の機能実装の時に役立つ
+        //     match self.dao_address {
+        //         Some(value) => {
+        //             if !self._modifier_only_call_from_dao(value) {
+        //                 return Err(ContractBaseError::InvalidCallingFromOrigin);
+        //             }
+        //         },
+        //         None => return Err(ContractBaseError::TheAddressNotFound),
+        //     };
+        //     match vec_of_parameters.len() {
+        //         1 => {
+        //             let proposal_id = match vec_of_parameters[0].parse::<u128>() {
+        //                 Ok(value) => value,
+        //                 Err(_) => return Err(ContractBaseError::ParameterInvalid),
+        //             };
+        //             let proposal_info = match self._get_proposal_info(proposal_id) {
+        //                 Ok(value) => value,
+        //                 Err(_) => {
+        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+        //                 }
+        //             };
+        //             match self._valid_proposal_info_for_change_enabel_or_not(&proposal_info) {
+        //                 true => (),
+        //                 false => {
+        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+        //                 }
+        //             };
+        //             let vec_of_params =
+        //                 common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
+        //             match vec_of_params.len() {
+        //                 1 => match bool::from_str(&vec_of_params[0]) {
+        //                     Ok(value) => self.is_enable = value,
+        //                     Err(_) => {
+        //                         return Err(ContractBaseError::Custom(
+        //                             "Invalid Proposal.".to_string(),
+        //                         ))
+        //                     }
+        //                 },
+        //                 _ => {
+        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
+        //                 }
+        //             };
+        //         }
+        //         _ => return Err(ContractBaseError::ParameterInvalid),
+        //     }
+        //     Ok(())
+        // }
     }
 
     impl DefaultMember {
@@ -147,7 +147,7 @@ mod default_member {
             let mut instance = Self::default();
             instance.command_list.push("add_member".to_string());
             instance.command_list.push("delete_member".to_string());
-            instance.command_list.push("change_enable_or_not".to_string());
+            // instance.command_list.push("change_enable_or_not".to_string());
             instance.command_list.push("set_dao_address".to_string());
             instance.command_list.push("change_election_commisioner".to_string());
             instance.command_list.push("update_proposal_manager_address".to_string());
@@ -199,14 +199,14 @@ mod default_member {
             self.proposal_manager_address
         }
 
-        fn _update_proposal_manager_address(&mut self)  -> core::result::Result<(), ContractBaseError> {
-            if _modifier_only_call_from_proposal() == false {
+        fn _update_proposal_manager_address(&mut self, vec_of_parameters:Vec<String>)  -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() != 1{
                 return Err(ContractBaseError::ParameterInvalid);
             }
-            let address = match common_logics::convert_string_to_accountid(vec_of_parameters[0]) {
+            let address = match common_logics::convert_string_to_accountid(&vec_of_parameters[0]) {
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
             };

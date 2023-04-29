@@ -2,7 +2,7 @@
 
 #[openbrush::contract]
 pub mod communication_base {
-    use default_contract::default_contract::{DefaultContract, DefaultContractRef};
+    use default_contract::default_contract::{DefaultContractRef};
     use contract_helper::traits::contract_base::contract_base::contractbase_external::ContractBase;
     use contract_helper::traits::contract_base::contract_base::*;
     use ink::{prelude::string::String};

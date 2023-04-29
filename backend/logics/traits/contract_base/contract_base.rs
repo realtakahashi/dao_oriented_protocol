@@ -30,7 +30,7 @@ pub trait ContractBase {
         vec_of_parameters:Vec<String>,
     ) -> core::result::Result<(), ContractBaseError> {
         match self.get_dao_address() {
-            Some(_value) => return Err(ContractBaseError::IsAlreadySetDaoAddress),
+            Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
             None => {
                 match vec_of_parameters.len(){
                     1 => {
@@ -72,6 +72,8 @@ pub trait ContractBase {
     
     #[ink(message)]
     fn get_data(&self,target_function:String) -> Vec<Vec<u8>>;
+
+    // todo: 全ての関数インタフェースかつパラメータの説明付き文を取得出来る関数を実装する
     
     fn _set_dao_address_impl(&mut self, dao_address:AccountId) -> core::result::Result<(), ContractBaseError>;
 
@@ -79,6 +81,6 @@ pub trait ContractBase {
 
     fn _function_calling_switch(&mut self, command:String, vec_of_parameters:Vec<String>, caller:AccountId) -> core::result::Result<(), ContractBaseError>;
 
-    fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>;
+    // fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>;
 
 }

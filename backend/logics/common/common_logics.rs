@@ -1,5 +1,6 @@
 use ink::prelude::{ vec, vec::Vec };
 use ink::prelude::string::{ String, ToString };
+use sp_runtime::AccountId32;
 use openbrush::traits::AccountId;
 pub use crate::traits::errors::contract_error::ContractBaseError;
 
@@ -41,6 +42,20 @@ pub fn convert_string_to_u128(string_value:&String) -> Result<u128,ContractBaseE
 
 pub fn convert_string_to_u8(string_value:&String) -> Result<u8,ContractBaseError> {
     match u8::from_str_radix(string_value.as_str(), 10) {
+        Ok(value) => Ok(value),
+        Err(_e) => return Err(ContractBaseError::ParameterInvalid),
+    }
+}
+
+pub fn convert_string_to_u16(string_value:&String) -> Result<u16,ContractBaseError> {
+    match u16::from_str_radix(string_value.as_str(), 10) {
+        Ok(value) => Ok(value),
+        Err(_e) => return Err(ContractBaseError::ParameterInvalid),
+    }
+}
+
+pub fn convert_string_to_u64(string_value:&String) -> Result<u64,ContractBaseError> {
+    match u64::from_str_radix(string_value.as_str(), 10) {
         Ok(value) => Ok(value),
         Err(_e) => return Err(ContractBaseError::ParameterInvalid),
     }

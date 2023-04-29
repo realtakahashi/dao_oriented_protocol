@@ -1,5 +1,6 @@
 use ink::storage::traits::StorageLayout;
 use ink::prelude::string::{String};
+use ink::prelude::vec::Vec;
 use openbrush::traits::AccountId;
 
 #[derive(Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
@@ -51,19 +52,21 @@ pub enum ProposalKind {
         Executed,
         /// denied
         Denied,
+        /// Finished
+        Finished,
     }
 
-    #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
+    #[derive(Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
     pub struct ElectionInfo {
-        id: u128,
-        proposal_id: u128,
-        minimum_voter_turnout_percentage: u8,
-        passing_percentage: u8,
-        number_of_votes: u128,
-        count_of_yes: u128,
-        count_of_no: u128,
-        list_of_voters: Vec<AccountId>,
-        list_of_electoral_commissioner: Vec<AccountId>,
-        is_passed: bool,
+        pub id: u128,
+        pub proposal_id: u128,
+        pub minimum_voter_turnout_percentage: u64,
+        pub passing_percentage: u64,
+        pub number_of_votes: u64,
+        pub count_of_yes: u64,
+        pub count_of_no: u64,
+        pub list_of_voters: Vec<AccountId>,
+        pub list_of_electoral_commissioner: Vec<AccountId>,
+        pub is_passed: bool,
     }
