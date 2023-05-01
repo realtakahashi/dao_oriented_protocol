@@ -27,7 +27,7 @@ pub mod default_contract {
             return_value
         }
     
-        fn _set_dao_address_impl(
+        fn _set_application_core_address_impl(
             &mut self,
             dao_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
@@ -43,6 +43,7 @@ pub mod default_contract {
             &mut self,
             command: String,
             _vec_of_parameters: Vec<String>,
+            _caller_eoa: AccountId,
             _caller: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {

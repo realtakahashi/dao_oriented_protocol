@@ -17,15 +17,15 @@ pub type ContractBaseRef = dyn ContractBase;
 pub trait ContractBase {
 
     #[ink(message)]
-    fn execute_interface(&mut self, command:String, parameters_csv:String, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
+    fn execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
         let command_list = self._get_command_list();
         if command_list.iter().filter(|item| *item == &command).collect::<Vec<&String>>().len() == 0{
             return Err(ContractBaseError::CommnadNotFound);
         }
-        self._execute_interface(command, parameters_csv, caller)
+        self._execute_interface(command, parameters_csv, caller_eoa, caller)
     }
 
-    fn _set_dao_address(
+    fn _set_application_core_address(
         &mut self,
         vec_of_parameters:Vec<String>,
     ) -> core::result::Result<(), ContractBaseError> {
@@ -34,8 +34,8 @@ pub trait ContractBase {
             None => {
                 match vec_of_parameters.len(){
                     1 => {
-                        match common_logics::convert_string_to_accountid(&vec_of_parameters[0]){
-                            Some(value) => self._set_dao_address_impl(value),
+                        match common_logics::convert_hexstring_to_accountid(vec_of_parameters[0].clone()){
+                            Some(value) => self._set_application_core_address_impl(value),
                             None => return Err(ContractBaseError::ParameterInvalid),
                         }
                     },
@@ -45,10 +45,10 @@ pub trait ContractBase {
         }
     }
 
-    fn _execute_interface(&mut self, command:String, parameters_csv:String, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
-        let vec_of_parameters: Vec<String> = match parameters_csv.find(',') {
+    fn _execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
+        let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
             Some(_index) => parameters_csv
-                .split(',')
+                .split(&"$1$".to_string())
                 .map(|col| col.to_string())
                 .collect(),
             None => {
@@ -57,10 +57,13 @@ pub trait ContractBase {
                 rec
             }
         };
-        self._function_calling_switch(command, vec_of_parameters, caller)
+        self._function_calling_switch(command, vec_of_parameters, caller_eoa, caller)
     }
 
     fn _modifier_only_call_from_dao(&self,caller:AccountId) -> bool {
+        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao get_dao_address:{:?}",self.get_dao_address());
+        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao caller:{:?}",caller);
+
         match self.get_dao_address() {
             Some(value) => value == caller,
             None => false,
@@ -75,11 +78,11 @@ pub trait ContractBase {
 
     // todo: 全ての関数インタフェースかつパラメータの説明付き文を取得出来る関数を実装する
     
-    fn _set_dao_address_impl(&mut self, dao_address:AccountId) -> core::result::Result<(), ContractBaseError>;
+    fn _set_application_core_address_impl(&mut self, dao_address:AccountId) -> core::result::Result<(), ContractBaseError>;
 
     fn _get_command_list(&self) -> &Vec<String>; 
 
-    fn _function_calling_switch(&mut self, command:String, vec_of_parameters:Vec<String>, caller:AccountId) -> core::result::Result<(), ContractBaseError>;
+    fn _function_calling_switch(&mut self, command:String, vec_of_parameters:Vec<String>, caller_eoa:AccountId, caller_contract:AccountId) -> core::result::Result<(), ContractBaseError>;
 
     // fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>;
 

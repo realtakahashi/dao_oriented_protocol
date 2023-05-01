@@ -68,5 +68,5 @@ pub enum ProposalKind {
         pub count_of_no: u64,
         pub list_of_voters: Vec<AccountId>,
         pub list_of_electoral_commissioner: Vec<AccountId>,
-        pub is_passed: bool,
+        pub is_passed: Option<bool>,
     }

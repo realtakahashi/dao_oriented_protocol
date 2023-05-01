@@ -2,13 +2,18 @@
 
 #[openbrush::contract]
 mod application_core {
-    use openbrush::{contracts::{ ownable::* }, modifiers, storage::Mapping, traits::Storage};
+    use openbrush::{ storage::Mapping, traits::Storage};
     use ink::prelude::string::{String};
+    use ink::prelude::string::ToString;
     use ink::prelude::{vec::Vec};
     use ink::storage::traits::StorageLayout;
     use contract_helper::{traits::types::types::{*, ProposalInfo, ProposalStatus}, common::common_logics};
-    use communication_base::communication_base::CommunicationBaseRef;
-    use scale::{Decode, Encode};
+    use default_contract::default_contract::{DefaultContractRef};
+    use contract_helper::traits::contract_base::contract_base::contractbase_external::ContractBase;
+    use contract_helper::traits::contract_base::contract_base::*;
+
+//     use communication_base::communication_base::CommunicationBaseRef;
+    use scale::{Decode};
 
     #[derive(Debug, Clone, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
@@ -54,30 +59,36 @@ mod application_core {
         pre_install_member_manger: Option<AccountId>,
         pre_install_proposal_manager: Option<AccountId>,
         pre_install_election: Option<AccountId>,
-        communication_base_address: Option<AccountId>,
-        appliction_core_address_string: Option<String>,
+//        communication_base_address: Option<AccountId>,
+        // appliction_core_address_string: Option<String>,
     }
 
     impl ApplicationCore {
         #[ink(constructor)]
-        pub fn new(pre_install_member_manger:AccountId, pre_install_proposal_manager:AccountId, pre_install_election:AccountId, 
-            communication_base_address:AccountId) -> Self {
+        // pub fn new(pre_install_member_manger:AccountId, pre_install_proposal_manager:AccountId, pre_install_election:AccountId, 
+        //     communication_base_address:AccountId) -> Self {
+        pub fn new(pre_install_member_manger:AccountId, pre_install_proposal_manager:AccountId, pre_install_election:AccountId) -> Self {
             let mut instance = Self::default();
             instance.pre_install_member_manger = Some(pre_install_member_manger);
             instance.pre_install_proposal_manager = Some(pre_install_proposal_manager);
-            instance.pre_install_election = Some(pre_install_election);    
-            instance.communication_base_address = Some(communication_base_address);    
+            instance.pre_install_election = Some(pre_install_election);
+            instance._set_application_core_address(pre_install_member_manger);    
+            instance._set_application_core_address(pre_install_proposal_manager);    
+            instance._set_application_core_address(pre_install_election);    
+            // instance.communication_base_address = Some(communication_base_address);
+
             instance
         }
 
-        #[ink(message)]
-        pub fn set_appliction_core_address_string(&mut self, address_string:String) -> Result<()>{
-            match self.appliction_core_address_string{
-                Some(_) => return Err(Error::TheValueCanSetOnlyOnce),
-                None => self.appliction_core_address_string = Some(address_string),
-            }
-            Ok(())
-        }
+        // #[ink(message)]
+        // pub fn set_appliction_core_address_string(&mut self, address_string:String) -> Result<()>{
+        //     match self.appliction_core_address_string{
+        //         Some(_) => return Err(Error::TheValueCanSetOnlyOnce),
+        //         None => self.appliction_core_address_string = Some(address_string),
+        //     }
+        //     // todo: preインストールのソフトウェアにset_dao_addressをコールする
+        //     Ok(())
+        // }
 
         #[ink(message)]
         pub fn get_installed_software(&self) -> Vec<SoftwareInfo> {
@@ -91,10 +102,34 @@ mod application_core {
             result
         }
 
+        /// parameter_dsv: Specify the delimiter in the "$X$" format. ex1) "aaa$1$bbb" ex2) "aaa$1$bbb$1$ccc$2$ddd"
         #[ink(message)]
-        pub fn execute_interface(&mut self,target_contract_address: AccountId, function_name: String, parameter_csv: String) -> Result<()>{
-            // アドレスがわかっている状態で、関数インターフェースの異なる他のコントラクトを呼び出せるかテストする。
-            Ok(())
+        pub fn execute_interface(&mut self,target_contract_address: AccountId, function_name: String, parameter_dsv: String) -> Result<()>{
+            ink::env::debug_println!("########## application_core:execute_interface [0] ###############");
+            // todo: install済みソフトウェアかチェクが必要
+            if self._modifier_only_call_from_member_eoa() == false {
+                return Err(Error::CallFromInvalidOrigin);
+            }
+
+            ink::env::debug_println!("########## application_core:execute_interface [1] ###############");
+            let mut instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(target_contract_address);
+            match instance.execute_interface(function_name, parameter_dsv, self.env().caller(), self.env().account_id()){
+                Ok(()) => Ok(()),
+                Err(_) => return Err(Error::Custom("ExecutionIsFailure".to_string())),
+            }
+
+            // let mut instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
+            // match instance.call_execute_interface_of_function(
+            //     target_contract_address,
+            //     function_name,
+            //     parameter_dsv,
+            //     self.env().caller()
+            // ){
+            //     Ok(()) => Ok(()),
+            //     Err(_) => return Err(Error::Custom("ExecutionIsFailure".to_string())),
+            // }
         }
 
         /// InstallはProposalで認められた場合のみ実行出来るようにする
@@ -103,10 +138,10 @@ mod application_core {
             if self._modifier_only_call_from_member_eoa() == false {
                 return Err(Error::CallFromInvalidOrigin);
             }
-            match self._check_applicaiton_core_address_string() {
-                Ok(()) => (),
-                Err(error) => return Err(error),
-            }
+            // match self._check_applicaiton_core_address_string() {
+            //     Ok(()) => (),
+            //     Err(error) => return Err(error),
+            // }
             let software_info = match self._get_proposal_info_and_create_software_info(proposal_id) {
                 Ok(value) => value,
                 Err(error) => return Err(error),
@@ -117,7 +152,7 @@ mod application_core {
                 None => {
                     match software_info.kind { 
                         SoftwareKind::ProposalManager | SoftwareKind::MemberManager | SoftwareKind::Election => 
-                            match self._uninstall_Present_Proposal_Memeber_Election(software_info.id){
+                            match self._uninstall_present_proposal_memeber_election(software_info.id){
                                 Ok(()) => (),
                                 Err(error) => return Err(error),
                             },
@@ -125,7 +160,7 @@ mod application_core {
                     }
                     self.installed_software_list_with_id.insert(&self.next_software_id, &software_info);
                     self.installed_software_list_with_address.insert(&software_info.contract_address.clone(), &software_info);
-                    match self._set_dao_address(software_info.contract_address) {
+                    match self._set_application_core_address(software_info.contract_address) {
                         Ok(()) => (),
                         Err(error) => return Err(error),
                     }
@@ -140,10 +175,10 @@ mod application_core {
             if self._modifier_only_call_from_member_eoa() == false {
                 return Err(Error::CallFromInvalidOrigin);
             }
-            match self._check_applicaiton_core_address_string() {
-                Ok(()) => (),
-                Err(error) => return Err(error),
-            }
+            // match self._check_applicaiton_core_address_string() {
+            //     Ok(()) => (),
+            //     Err(error) => return Err(error),
+            // }
             let proposal_info = match self._get_proposal_info(target_proposal_id) {
                 Ok(value) => value,
                 Err(error) => return Err(error),
@@ -154,11 +189,12 @@ mod application_core {
             if proposal_info.target_function != "uninstall_software" {
                 return Err(Error::Custom("InvalidProposal".to_string()));
             }
-            // todo: paramertesはString。vecに変換必要。
-            if proposal_info.parameters.len() != 1 {
+            
+            let params = common_logics::change_dsv_string_to_vec_of_string(proposal_info.parameters,"$1$".to_string());
+            if params.len() != 1 {
                 return Err(Error::Custom("InvalidProposal".to_string()));
             }
-            let software_id = match common_logics::convert_string_to_u128(&proposal_info.parameters[0]){
+            let software_id = match common_logics::convert_string_to_u128(&params[0]){
                 Ok(value) => value,
                 Err(_) => return Err(Error::Custom("InvalidProposal".to_string())),
             };            
@@ -179,7 +215,7 @@ mod application_core {
             Ok(())
         }
 
-        fn _uninstall_Present_Proposal_Memeber_Election(&mut self, software_id:u128) -> Result<()> {
+        fn _uninstall_present_proposal_memeber_election(&mut self, software_id:u128) -> Result<()> {
             let software_list = self.get_installed_software();
             for software in software_list {
                 if software.id == software_id {
@@ -195,23 +231,32 @@ mod application_core {
         //     Ok(())
         // }
 
-        fn _set_dao_address(&self, target_contract_address:AccountId) -> Result<()> {
-            let address_string = match &self.appliction_core_address_string {
-                Some(value) => value,
-                None => return Err(Error::TheApplicationCoreAddressStringMustBeSet),
-            };
-            let mut instance: CommunicationBaseRef =
-            ink::env::call::FromAccountId::from_account_id(
-                self.communication_base_address.unwrap(),
-            );
-            match instance.call_execute_interface_of_function(
-                target_contract_address,
-                "set_dao_address".to_string(),
-                address_string.to_string(),
-            ) {
+        fn _set_application_core_address(&self, target_contract_address:AccountId) -> Result<()> {
+            // let address_string = match &self.appliction_core_address_string {
+            //     Some(value) => value,
+            //     None => return Err(Error::TheApplicationCoreAddressStringMustBeSet),
+            // };
+            let address_string = hex::encode(self.env().account_id());
+            let mut instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(target_contract_address);
+            match instance.execute_interface("set_application_core_address".to_string(), address_string.to_string(), self.env().caller(), self.env().account_id()){
                 Ok(()) => Ok(()),
                 Err(_) => Err(Error::CommunicationBaseCallingError),
             }
+
+            // let mut instance: CommunicationBaseRef =
+            // ink::env::call::FromAccountId::from_account_id(
+            //     self.communication_base_address.unwrap(),
+            // );
+            // match instance.call_execute_interface_of_function(
+            //     target_contract_address,
+            //     "set_dao_address".to_string(),
+            //     address_string.to_string(),
+            //     self.env().caller()
+            // ) {
+            //     Ok(()) => Ok(()),
+            //     Err(_) => Err(Error::CommunicationBaseCallingError),
+            // }
         }
 
         fn _modifier_only_call_from_member_eoa(&self) -> bool {
@@ -233,10 +278,13 @@ mod application_core {
         ) -> core::result::Result<Vec<MemberInfo>, Error> {
             let member_manager_address = self._get_member_manager_address();
             let mut result: Vec<MemberInfo> = Vec::new();
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
-            let get_value: Vec<Vec<u8>> = instance
-                .get_data_from_contract(member_manager_address, "get_member_list".to_string());
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
+            // let get_value: Vec<Vec<u8>> = instance
+            //     .get_data_from_contract(member_manager_address, "get_member_list".to_string());
+            let instance: DefaultContractRef = ink::env::call::FromAccountId::from_account_id(member_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.get_data("get_member_list".to_string());
+
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match MemberInfo::decode(&mut array_value.clone()) {
@@ -270,10 +318,14 @@ mod application_core {
 
         fn _get_proposal_info(&self, proposal_id:u128) -> core::result::Result<ProposalInfo,Error> {
             let proposal_manager_address = self._get_proposal_manager_address();
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
-            let get_value: Vec<Vec<u8>> = instance
-                .get_data_from_contract(proposal_manager_address, "get_proposal_info_list".to_string());
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
+            // let get_value: Vec<Vec<u8>> = instance
+            //     .get_data_from_contract(proposal_manager_address, "get_proposal_info_list".to_string());
+
+            let instance: DefaultContractRef = ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.get_data("get_proposal_info_list".to_string());
+
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match ProposalInfo::decode(&mut array_value.clone()) {
@@ -305,7 +357,7 @@ mod application_core {
             if proposal_info.target_function != "install_software" {
                 return Err(Error::Custom("InvalidProposal".to_string()));
             }
-            let parameters = common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
+            let parameters = common_logics::change_dsv_string_to_vec_of_string(proposal_info.parameters,"$1$".to_string());
             match parameters.len() == 4 {
                 true =>{
                     let contract_address = match common_logics::convert_string_to_accountid(&parameters[3]){
@@ -345,48 +397,22 @@ mod application_core {
             return self.pre_install_proposal_manager.unwrap();
         }
 
-        fn _check_applicaiton_core_address_string(&self) -> Result<()> {
-            let address_sting =  match &self.appliction_core_address_string  {
-                Some(value) => value,
-                None => return Err(Error::TheApplicationCoreAddressStringMustBeSet),
-            };
+        // fn _check_applicaiton_core_address_string(&self) -> Result<()> {
+        //     let address_sting =  match &self.appliction_core_address_string  {
+        //         Some(value) => value,
+        //         None => return Err(Error::TheApplicationCoreAddressStringMustBeSet),
+        //     };
                 
-            let tmp = match common_logics::convert_string_to_accountid(&address_sting){
-                Some(value) => value,
-                None => return Err(Error::Custom("MayBeInvalidAddressStringWasSet".to_string())),
-            };
-            match tmp == self.env().account_id() {
-                true => Ok(()),
-                false => return Err(Error::InvalidTheApplicationCoreAddressString),
-            }
-        }
+        //     let tmp = match common_logics::convert_string_to_accountid(&address_sting){
+        //         Some(value) => value,
+        //         None => return Err(Error::Custom("MayBeInvalidAddressStringWasSet".to_string())),
+        //     };
+        //     match tmp == self.env().account_id() {
+        //         true => Ok(()),
+        //         false => return Err(Error::InvalidTheApplicationCoreAddressString),
+        //     }
+        // }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
-        use ink_lang as ink;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let dao_core = DaoCore::default();
-            assert_eq!(dao_core.get(), false);
-        }
-
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut dao_core = DaoCore::new(false);
-            assert_eq!(dao_core.get(), false);
-            dao_core.flip();
-            assert_eq!(dao_core.get(), true);
-        }
-    }
 }
+

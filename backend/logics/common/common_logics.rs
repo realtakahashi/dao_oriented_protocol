@@ -1,10 +1,8 @@
 use ink::prelude::{ vec, vec::Vec };
 use ink::prelude::string::{ String, ToString };
-use sp_runtime::AccountId32;
 use openbrush::traits::AccountId;
 pub use crate::traits::errors::contract_error::ContractBaseError;
 
-#[inline]
 pub fn convert_string_to_accountid(account_str: &str) -> Option<AccountId> {
     let mut output = vec![0xFF; 35];
     match bs58::decode(account_str).into(&mut output) {
@@ -19,6 +17,19 @@ pub fn convert_string_to_accountid(account_str: &str) -> Option<AccountId> {
     Some(account_id)
 }
 
+pub fn convert_hexstring_to_accountid(hex_account_str: String) -> Option<AccountId> {
+    match hex::decode(hex_account_str) {
+        Ok(value) => {
+            let mut array = [0; 32];
+            let bytes = &value[..array.len()];
+            array.copy_from_slice(bytes);
+            let account_id: AccountId = array.into();
+            return Some(account_id);
+        },
+        Err(_) => None,
+    }
+}
+
 pub fn change_csv_string_to_vec_of_string(parameters_csv: String) ->Vec<String> {
     match parameters_csv.find(',') {
         Some(_index) => parameters_csv
@@ -28,6 +39,20 @@ pub fn change_csv_string_to_vec_of_string(parameters_csv: String) ->Vec<String> 
         None => {
             let mut rec: Vec<String> = Vec::new();
             rec.push(parameters_csv);
+            rec
+        }
+    }
+}
+
+pub fn change_dsv_string_to_vec_of_string(parameters_dsv: String, delimiter:String) ->Vec<String> {
+    match parameters_dsv.find(&delimiter) {
+        Some(_index) => parameters_dsv
+            .split(&delimiter)
+            .map(|col| col.to_string())
+            .collect(),
+        None => {
+            let mut rec: Vec<String> = Vec::new();
+            rec.push(parameters_dsv);
             rec
         }
     }

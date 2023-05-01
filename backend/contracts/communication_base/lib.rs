@@ -28,11 +28,14 @@ pub mod communication_base {
             &mut self,
             target_contract: AccountId,
             command: String,
-            parameter_csv: String,
+            parameter_dsv: String,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
+            ink::env::debug_println!("########## communication_base:call_execute_interface_of_function ###############");
+
             let mut instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(target_contract);
-            instance.execute_interface(command, parameter_csv, self.env().caller())
+            instance.execute_interface(command, parameter_dsv, caller_eoa, self.env().caller())
         }
     }
 
