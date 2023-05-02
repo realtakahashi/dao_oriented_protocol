@@ -10,15 +10,15 @@ pub mod default_contract {
 
     #[ink(storage)]
     pub struct DefaultContract {
-        dao_address: Option<AccountId>,
+        application_core_address: Option<AccountId>,
         command_list: Vec<String>,
         is_enable: bool,
     }
 
     impl ContractBase for DefaultContract {
         #[ink(message)]
-        fn get_dao_address(&self) -> Option<AccountId> {
-            self.dao_address
+        fn get_application_core_address(&self) -> Option<AccountId> {
+            self.application_core_address
         }
 
         #[ink(message)]
@@ -29,9 +29,9 @@ pub mod default_contract {
     
         fn _set_application_core_address_impl(
             &mut self,
-            dao_address: AccountId,
+            application_core_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            self.dao_address = Some(dao_address);
+            self.application_core_address = Some(application_core_address);
             Ok(())
         }
 
@@ -63,7 +63,7 @@ pub mod default_contract {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self { 
-                dao_address: None,
+                application_core_address: None,
                 command_list: [
                     "test_function".to_string(),
                 ].to_vec(),

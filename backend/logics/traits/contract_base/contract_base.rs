@@ -29,7 +29,7 @@ pub trait ContractBase {
         &mut self,
         vec_of_parameters:Vec<String>,
     ) -> core::result::Result<(), ContractBaseError> {
-        match self.get_dao_address() {
+        match self.get_application_core_address() {
             Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
             None => {
                 match vec_of_parameters.len(){
@@ -61,24 +61,24 @@ pub trait ContractBase {
     }
 
     fn _modifier_only_call_from_dao(&self,caller:AccountId) -> bool {
-        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao get_dao_address:{:?}",self.get_dao_address());
+        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao get_application_core_address:{:?}",self.get_application_core_address());
         ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao caller:{:?}",caller);
 
-        match self.get_dao_address() {
+        match self.get_application_core_address() {
             Some(value) => value == caller,
             None => false,
         }
     }
 
     #[ink(message)]
-    fn get_dao_address(&self) -> Option<AccountId>;
+    fn get_application_core_address(&self) -> Option<AccountId>;
     
     #[ink(message)]
     fn get_data(&self,target_function:String) -> Vec<Vec<u8>>;
 
     // todo: 全ての関数インタフェースかつパラメータの説明付き文を取得出来る関数を実装する
     
-    fn _set_application_core_address_impl(&mut self, dao_address:AccountId) -> core::result::Result<(), ContractBaseError>;
+    fn _set_application_core_address_impl(&mut self, application_core_address:AccountId) -> core::result::Result<(), ContractBaseError>;
 
     fn _get_command_list(&self) -> &Vec<String>; 
 

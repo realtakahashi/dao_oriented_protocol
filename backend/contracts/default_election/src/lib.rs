@@ -5,7 +5,6 @@ mod default_election {
     use communication_base::communication_base::CommunicationBaseRef;
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::{ElectionInfo, *};
-    //    use contract_helper::traits::errors::contract_error::*;
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
@@ -19,20 +18,19 @@ mod default_election {
         election_list_with_election_id: Mapping<u128, ElectionInfo>,
         minimum_voter_turnout_percentage: u64,
         passing_percentage: u64,
-        dao_address: Option<AccountId>,
+        application_core_address: Option<AccountId>,
         remain_term_electoral_commissioner: u8,
         next_election_id: u128,
         command_list: Vec<String>,
         proposal_manager_address: Option<AccountId>,
-        is_enable: bool,
         communication_base_ref: AccountId,
         member_manager_address: Option<AccountId>,
     }
 
     impl ContractBase for DefaultElection {
         #[ink(message)]
-        fn get_dao_address(&self) -> Option<AccountId> {
-            self.dao_address
+        fn get_application_core_address(&self) -> Option<AccountId> {
+            self.application_core_address
         }
 
         /// get data interface
@@ -53,11 +51,11 @@ mod default_election {
 
         fn _set_application_core_address_impl(
             &mut self,
-            dao_address: AccountId,
+            application_core_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            match self.dao_address {
+            match self.application_core_address {
                 Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => self.dao_address = Some(dao_address),
+                None => self.application_core_address = Some(application_core_address),
             }
             Ok(())
         }
@@ -141,7 +139,7 @@ mod default_election {
                 election_list_with_election_id: Mapping::default(),
                 minimum_voter_turnout_percentage: 50,
                 passing_percentage: 50,
-                dao_address: None,
+                application_core_address: None,
                 remain_term_electoral_commissioner: 5,
                 next_election_id: 0,
                 command_list: [
@@ -156,7 +154,6 @@ mod default_election {
                     "update_proposal_manager_address".to_string(),
                 ]
                 .to_vec(),
-                is_enable: false,
                 communication_base_ref: communication_base_ref,
                 member_manager_address: None,
                 proposal_manager_address: None,
@@ -300,6 +297,14 @@ mod default_election {
                         .insert(&self.next_election_id, &election_info);
                     self.next_election_id += 1;
                     self.remain_term_electoral_commissioner -= 1;
+                    // match self._update_proposal_info(proposal_id, 2) {
+                    //     //2: PropsaolStatus -> Voting
+                    //     Ok(()) => (),
+                    //     Err(error) => {
+                    //         ink::env::debug_println!("########## default_election:_end_election [11] ");
+                    //         return Err(error);
+                    //     },
+                    // }
                     ink::env::debug_println!("########## default_election:_create_election[6] ");
                 }
                 false => return Err(ContractBaseError::ParameterInvalid),
@@ -619,8 +624,8 @@ mod default_election {
             None
         }
 
-        fn _modifier_only_call_from_proposal(&self, caller: AccountId) -> bool {
-            self.proposal_manager_address == Some(caller)
+        fn _modifier_only_call_from_proposal(&self, caller_contract: AccountId) -> bool {
+            self.proposal_manager_address == Some(caller_contract)
         }
     }
 

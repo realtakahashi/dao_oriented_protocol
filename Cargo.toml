@@ -7,4 +7,6 @@ members = [
     "backend/contracts/default_member",
     "backend/contracts/default_proposal",
     "backend/logics",
+    "example/flipper_oriented_dao/contracts/dao_oriented_flipper",
+
 ]

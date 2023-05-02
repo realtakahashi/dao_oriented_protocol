@@ -18,7 +18,7 @@ mod default_member {
         member_list_with_id: Mapping<u128, MemberInfo>,
         member_list_with_eoa: Mapping<AccountId, MemberInfo>,
         next_member_id: u128,
-        dao_address: Option<AccountId>,
+        application_core_address: Option<AccountId>,
         command_list: Vec<String>,
         communication_base_ref: Option<AccountId>,
         is_enable: bool,
@@ -29,8 +29,8 @@ mod default_member {
 
     impl ContractBase for DefaultMember {
         #[ink(message)]
-        fn get_dao_address(&self) -> Option<AccountId> {
-            self.dao_address
+        fn get_application_core_address(&self) -> Option<AccountId> {
+            self.application_core_address
         }
 
         #[ink(message)]
@@ -56,11 +56,11 @@ mod default_member {
 
         fn _set_application_core_address_impl(
             &mut self,
-            dao_address: AccountId,
+            application_core_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            match self.dao_address {
+            match self.application_core_address {
                 Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => self.dao_address = Some(dao_address),
+                None => self.application_core_address = Some(application_core_address),
             }
             Ok(())
         }
@@ -305,7 +305,7 @@ mod default_member {
                 return Err(ContractBaseError::Custom("Only Member does.".to_string()));
             }
             ink::env::debug_println!("########## default_member:_add_member [3]");
-            match self.dao_address {
+            match self.application_core_address {
                 Some(value) => self._add_member_impl(vec_of_parameters),
                 None => return Err(ContractBaseError::TheAddressNotFound),
             }

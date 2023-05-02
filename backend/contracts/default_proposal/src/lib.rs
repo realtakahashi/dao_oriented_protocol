@@ -24,7 +24,7 @@ mod default_proposal {
     pub struct DefaultProposal {
         proposal_list_with_id: Mapping<u128, ProposalInfo>,
         next_proposal_id: u128,
-        dao_address: Option<AccountId>,
+        application_core_address: Option<AccountId>,
         election_address: Option<AccountId>,
         command_list: Vec<String>,
         member_manager_address: Option<AccountId>,
@@ -35,8 +35,8 @@ mod default_proposal {
     impl ContractBase for DefaultProposal {
         /// get dao address
         #[ink(message)]
-        fn get_dao_address(&self) -> Option<AccountId> {
-            self.dao_address
+        fn get_application_core_address(&self) -> Option<AccountId> {
+            self.application_core_address
         }
 
         /// get data interface
@@ -58,11 +58,11 @@ mod default_proposal {
         /// [private] function set dao address
         fn _set_application_core_address_impl(
             &mut self,
-            dao_address: AccountId,
+            application_core_address: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            match self.dao_address {
+            match self.application_core_address {
                 Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => self.dao_address = Some(dao_address),
+                None => self.application_core_address = Some(application_core_address),
             }
             Ok(())
         }
@@ -81,9 +81,8 @@ mod default_proposal {
             caller_contract: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!(
-                "########## default_propsal:_function_calling_switch ###############"
+                "########## default_propsal:_function_calling_switch [1]"
             );
-
             match command.as_str() {
                 "add_proposal" => {
                     self._add_proposal(vec_of_parameters, caller_eoa, caller_contract)
@@ -141,7 +140,7 @@ mod default_proposal {
             Self {
                 proposal_list_with_id: Mapping::default(),
                 next_proposal_id: 0,
-                dao_address: None,
+                application_core_address: None,
                 election_address: None,
                 command_list: [
                     "add_proposal".to_string(),
