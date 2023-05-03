@@ -144,15 +144,15 @@ mod application_core {
                 return Err(Error::TheSoftwareDoesNotExists);
             }
             ink::env::debug_println!(
-                "########## application_core:execute_interface [1] ###############"
+                "########## application_core:execute_interface [1] ###############: caller:{:?}",
+                self.env().caller()
             );
             let mut instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(target_contract_address);
-            match instance.execute_interface(
+            match instance.extarnal_execute_interface(
                 function_name,
                 parameter_dsv,
-                self.env().caller(),
-                self.env().account_id(),
+                self.env().caller()
             ) {
                 Ok(()) => Ok(()),
                 Err(_) => return Err(Error::Custom("ExecutionIsFailure".to_string())),
@@ -297,11 +297,10 @@ mod application_core {
             let address_string = hex::encode(self.env().account_id());
             let mut instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(target_contract_address);
-            match instance.execute_interface(
+            match instance.extarnal_execute_interface(
                 "set_application_core_address".to_string(),
                 address_string.to_string(),
-                self.env().caller(),
-                self.env().account_id(),
+                self.env().caller()
             ) {
                 Ok(()) => Ok(()),
                 Err(_) => Err(Error::CommunicationBaseCallingError),
@@ -345,7 +344,7 @@ mod application_core {
             //     .get_data_from_contract(member_manager_address, "get_member_list".to_string());
             let instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(member_manager_address);
-            let get_value: Vec<Vec<u8>> = instance.get_data("get_member_list".to_string());
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_member_list".to_string());
 
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
@@ -392,7 +391,7 @@ mod application_core {
 
             let instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
-            let get_value: Vec<Vec<u8>> = instance.get_data("get_proposal_info_list".to_string());
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_proposal_info_list".to_string());
 
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();

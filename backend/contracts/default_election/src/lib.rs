@@ -2,7 +2,9 @@
 
 #[openbrush::contract]
 mod default_election {
-    use communication_base::communication_base::CommunicationBaseRef;
+    //use communication_base::communication_base::CommunicationBaseRef;
+    use default_contract::DefaultContractRef;
+
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::{ElectionInfo, *};
     use contract_helper::common::common_logics::{self, ContractBaseError};
@@ -23,7 +25,7 @@ mod default_election {
         next_election_id: u128,
         command_list: Vec<String>,
         proposal_manager_address: Option<AccountId>,
-        communication_base_ref: AccountId,
+        // communication_base_ref: AccountId,
         member_manager_address: Option<AccountId>,
     }
 
@@ -71,32 +73,29 @@ mod default_election {
             command: String,
             vec_of_parameters: Vec<String>,
             caller_eoa: AccountId,
-            caller_contract: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
                 "create_election" => {
-                    self._create_election(vec_of_parameters, caller_eoa, caller_contract)
+                    self._create_election(vec_of_parameters, caller_eoa)
                 }
                 // "start_election" => self._start_election(vec_of_parameters),
-                "vote" => self._vote(vec_of_parameters, caller_eoa, caller_contract),
+                "vote" => self._vote(vec_of_parameters, caller_eoa),
                 "end_election" => {
-                    self._end_election(vec_of_parameters, caller_eoa, caller_contract)
+                    self._end_election(vec_of_parameters, caller_eoa)
                 }
                 "reset_minimum_voter_turnout_percentage" => self
                     ._reset_minimum_voter_turnout_percentage(
                         vec_of_parameters,
-                        caller_eoa,
-                        caller_contract,
+                        caller_eoa
                     ),
                 "reset_passing_percentage" => {
-                    self._reset_passing_percentage(vec_of_parameters, caller_eoa, caller_contract)
+                    self._reset_passing_percentage(vec_of_parameters, caller_eoa)
                 }
                 // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
                 "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
                 "update_proposal_manager_address" => self._update_proposal_manager_address(
                     vec_of_parameters,
-                    caller_eoa,
-                    caller_contract,
+                    caller_eoa
                 ),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
@@ -133,8 +132,9 @@ mod default_election {
     impl DefaultElection {
         /// Constructor that initializes the `bool` value to the given `init_value`.
         #[ink(constructor)]
-        pub fn new(communication_base_ref: AccountId) -> Self {
-            Self {
+        // pub fn new(communication_base_ref: AccountId) -> Self {
+        pub fn new() -> Self {
+        Self {
                 election_list_with_proposal_id: Mapping::default(),
                 election_list_with_election_id: Mapping::default(),
                 minimum_voter_turnout_percentage: 50,
@@ -154,10 +154,20 @@ mod default_election {
                     "update_proposal_manager_address".to_string(),
                 ]
                 .to_vec(),
-                communication_base_ref: communication_base_ref,
+                // communication_base_ref: communication_base_ref,
                 member_manager_address: None,
                 proposal_manager_address: None,
             }
+        }
+
+        #[ink(message)]
+        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
+            self.get_data(target_function)
+        }
+
+        #[ink(message)]
+        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
+            self._execute_interface(command, parameters_csv, caller_eoa)
         }
 
         #[ink(message)]
@@ -204,9 +214,8 @@ mod default_election {
             &mut self,
             vec_of_parameters: Vec<String>,
             caller_eoa: AccountId,
-            caller_contract: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() != 1 {
@@ -239,12 +248,11 @@ mod default_election {
         fn _create_election(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_create_election[1] ");
 
-            if self._modifier_only_call_from_dao(caller_contract) == false {
+            if self._modifier_only_call_from_dao(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             };
             ink::env::debug_println!("########## default_election:_create_election[2] ");
@@ -297,14 +305,14 @@ mod default_election {
                         .insert(&self.next_election_id, &election_info);
                     self.next_election_id += 1;
                     self.remain_term_electoral_commissioner -= 1;
-                    // match self._update_proposal_info(proposal_id, 2) {
-                    //     //2: PropsaolStatus -> Voting
-                    //     Ok(()) => (),
-                    //     Err(error) => {
-                    //         ink::env::debug_println!("########## default_election:_end_election [11] ");
-                    //         return Err(error);
-                    //     },
-                    // }
+                    match self._update_proposal_info(proposal_id, 2, caller_eoa) {
+                        //2: PropsaolStatus -> Voting
+                        Ok(()) => (),
+                        Err(error) => {
+                            ink::env::debug_println!("########## default_election:_end_election [11] ");
+                            return Err(error);
+                        },
+                    }
                     ink::env::debug_println!("########## default_election:_create_election[6] ");
                 }
                 false => return Err(ContractBaseError::ParameterInvalid),
@@ -317,13 +325,12 @@ mod default_election {
         fn _vote(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_vote [1] ");
 
             // todo: proposal_statusのチェックが必要 propsal_status = voting
-            if self._modifier_only_call_from_dao(caller_contract) == false {
+            if self._modifier_only_call_from_dao(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             ink::env::debug_println!("########## default_election:_vote [2] ");
@@ -393,12 +400,11 @@ mod default_election {
         fn _end_election(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_end_election [1] ");
 
-            if self._modifier_only_call_from_dao(caller_contract) == false {
+            if self._modifier_only_call_from_dao(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             ink::env::debug_println!("########## default_election:_end_election [2]: vec_of_parameters:{:?}",vec_of_parameters);
@@ -443,7 +449,7 @@ mod default_election {
                         true => {
                             ink::env::debug_println!("########## default_election:_end_election [8] ");
                             election_info.is_passed = Some(true);
-                            match self._update_proposal_info(proposal_id, 4) {
+                            match self._update_proposal_info(proposal_id, 4, caller_eoa) {
                                 //4: ProposalStatus -> Executed
                                 Ok(()) => (),
                                 Err(error) => {
@@ -455,7 +461,7 @@ mod default_election {
                         false => {
                             ink::env::debug_println!("########## default_election:_end_election [10] ");
                             election_info.is_passed = Some(false);
-                            match self._update_proposal_info(proposal_id, 5) {
+                            match self._update_proposal_info(proposal_id, 5, caller_eoa) {
                                 //5: PropsaolStatus -> Denied
                                 Ok(()) => (),
                                 Err(error) => {
@@ -482,6 +488,7 @@ mod default_election {
             &mut self,
             proposal_id: u128,
             to_status_u8: u8,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             let proposal_manager_address = match self.proposal_manager_address {
                 Some(value) => value,
@@ -489,14 +496,26 @@ mod default_election {
             };
 
             let params: String = proposal_id.to_string() + "$1$" + &to_status_u8.to_string();
-            let mut instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            instance.call_execute_interface_of_function(
-                proposal_manager_address,
+
+            let mut instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
+            match instance.extarnal_execute_interface(
                 "change_proposal_status_from_election".to_string(),
                 params,
-                self.env().caller(),
-            )
+                caller_eoa,
+            ) {
+                Ok(()) => Ok(()),
+                Err(_) => return Err(ContractBaseError::Custom("ExecutionIsFailure".to_string())),
+            }
+
+            // let mut instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
+            // instance.call_execute_interface_of_function(
+            //     proposal_manager_address,
+            //     "change_proposal_status_from_election".to_string(),
+            //     params,
+            //     self.env().caller(),
+            // )
         }
 
         /// _reset_minimum_voter_turnout_percentage
@@ -504,10 +523,9 @@ mod default_election {
         fn _reset_minimum_voter_turnout_percentage(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() != 1 {
@@ -527,10 +545,9 @@ mod default_election {
         fn _reset_passing_percentage(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() != 1 {
@@ -551,12 +568,17 @@ mod default_election {
                 Some(value) => value,
                 None => return Err(ContractBaseError::TheAddressNotFound),
             };
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
-                member_manager_address,
-                "get_member_list".to_string(),
-            );
+
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(member_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_member_list".to_string());
+            
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
+            // let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
+            //     member_manager_address,
+            //     "get_member_list".to_string(),
+            // );
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match MemberInfo::decode(&mut array_value.clone()) {
@@ -579,12 +601,18 @@ mod default_election {
                 Some(value) => value,
                 None => return Err(ContractBaseError::TheAddressNotFound),
             };
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
-                member_manager_address,
-                "get_election_commisioner_list".to_string(),
-            );
+
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(member_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_election_commisioner_list".to_string());
+
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
+            // let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
+            //     member_manager_address,
+            //     "get_election_commisioner_list".to_string(),
+            // );
+
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match MemberInfo::decode(&mut array_value.clone()) {
@@ -604,12 +632,18 @@ mod default_election {
                 Some(value) => value,
                 None => return None,
             };
-            let instance: CommunicationBaseRef =
-                ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
-            let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
-                proposal_manager_address,
-                "get_proposal_info_list".to_string(),
-            );
+
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_proposal_info_list".to_string());
+
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_ref);
+            // let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
+            //     proposal_manager_address,
+            //     "get_proposal_info_list".to_string(),
+            // );
+
             for value in get_value.iter() {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match ProposalInfo::decode(&mut array_value.clone()) {
@@ -624,8 +658,8 @@ mod default_election {
             None
         }
 
-        fn _modifier_only_call_from_proposal(&self, caller_contract: AccountId) -> bool {
-            self.proposal_manager_address == Some(caller_contract)
+        fn _modifier_only_call_from_proposal(&self) -> bool {
+            self.proposal_manager_address == Some(self.env().caller())
         }
     }
 

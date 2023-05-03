@@ -2,7 +2,9 @@
 
 #[openbrush::contract]
 mod default_member {
-    use communication_base::communication_base::CommunicationBaseRef;
+    // use communication_base::communication_base::CommunicationBaseRef;
+    use default_contract::DefaultContractRef;
+
     use contract_helper::common::common_logics;
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
@@ -20,7 +22,7 @@ mod default_member {
         next_member_id: u128,
         application_core_address: Option<AccountId>,
         command_list: Vec<String>,
-        communication_base_ref: Option<AccountId>,
+        // communication_base_ref: Option<AccountId>,
         is_enable: bool,
         proposal_manager_address: Option<AccountId>,
         election_commisioner_list: Mapping<u128, AccountId>,
@@ -73,25 +75,22 @@ mod default_member {
             &mut self,
             command: String,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
-                "add_member" => self._add_member(vec_of_parameters, caller_eoa, caller_contract),
+                "add_member" => self._add_member(vec_of_parameters, caller_eoa),
                 "delete_member" => {
-                    self._delete_member(vec_of_parameters, caller_eoa, caller_contract)
+                    self._delete_member(vec_of_parameters, caller_eoa)
                 }
                 // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
                 "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
                 "change_election_commisioner" => self._change_election_commisioner(
                     vec_of_parameters,
-                    caller_eoa,
-                    caller_contract,
+                    caller_eoa
                 ),
                 "update_proposal_manager_address" => self._update_proposal_manager_address(
                     vec_of_parameters,
-                    caller_eoa,
-                    caller_contract,
+                    caller_eoa
                 ),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
@@ -154,7 +153,8 @@ mod default_member {
 
     impl DefaultMember {
         #[ink(constructor)]
-        pub fn new(communication_base_ref: AccountId, owner_name: String) -> Self {
+        // pub fn new(communication_base_ref: AccountId, owner_name: String) -> Self {
+        pub fn new(owner_name: String) -> Self {
             let mut instance = Self::default();
             instance.command_list.push("add_member".to_string());
             instance.command_list.push("delete_member".to_string());
@@ -166,9 +166,19 @@ mod default_member {
             instance
                 .command_list
                 .push("update_proposal_manager_address".to_string());
-            instance.communication_base_ref = Some(communication_base_ref);
+            // instance.communication_base_ref = Some(communication_base_ref);
             instance._add_first_member(owner_name);
             instance
+        }
+
+        #[ink(message)]
+        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
+            self.get_data(target_function)
+        }
+
+        #[ink(message)]
+        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
+            self._execute_interface(command, parameters_csv, caller_eoa)
         }
 
         #[ink(message)]
@@ -219,10 +229,9 @@ mod default_member {
         fn _update_proposal_manager_address(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() != 1 {
@@ -241,10 +250,9 @@ mod default_member {
         fn _change_election_commisioner(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if vec_of_parameters.len() < 1 {
@@ -290,14 +298,13 @@ mod default_member {
         fn _add_member(
             &mut self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!(
                 "########## default_member:_add_member [1]:vec_of_parameters:{:?} ",
                 vec_of_parameters
             );
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             ink::env::debug_println!("########## default_member:_add_member [2]");
@@ -369,18 +376,22 @@ mod default_member {
             &self,
             proposal_id: u128,
         ) -> core::result::Result<ProposalInfo, ContractBaseError> {
-            let com_address = match self.communication_base_ref {
-                Some(value) => value,
-                None => return Err(ContractBaseError::CommunicationBaseContractAddressIsNotSet),
-            };
+            // let com_address = match self.communication_base_ref {
+            //     Some(value) => value,
+            //     None => return Err(ContractBaseError::CommunicationBaseContractAddressIsNotSet),
+            // };
             match self.proposal_manager_address {
                 Some(proposal_address) => {
-                    let instance: CommunicationBaseRef =
-                        ink::env::call::FromAccountId::from_account_id(com_address);
-                    let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
-                        proposal_address,
-                        "get_proposal_info_list".to_string(),
-                    );
+                    // let instance: CommunicationBaseRef =
+                    // //     ink::env::call::FromAccountId::from_account_id(com_address);
+                    // let get_value: Vec<Vec<u8>> = instance.get_data_from_contract(
+                    //     proposal_address,
+                    //     "get_proposal_info_list".to_string(),
+                    // );
+                    let instance: DefaultContractRef =
+                    ink::env::call::FromAccountId::from_account_id(proposal_address);
+                    let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_proposal_info_list".to_string());
+    
                     for value in get_value.iter() {
                         let array_value: &[u8] = value.as_slice().try_into().unwrap();
                         match ProposalInfo::decode(&mut array_value.clone()) {
@@ -411,10 +422,9 @@ mod default_member {
         fn _delete_member(
             &self,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             if self._modifier_only_call_from_member_eoa(caller_eoa) == false {
@@ -432,8 +442,8 @@ mod default_member {
             }
         }
 
-        fn _modifier_only_call_from_proposal(&self, caller_contract: AccountId) -> bool {
-            self.proposal_manager_address == Some(caller_contract)
+        fn _modifier_only_call_from_proposal(&self) -> bool {
+            self.proposal_manager_address == Some(self.env().caller())
         }
     }
 

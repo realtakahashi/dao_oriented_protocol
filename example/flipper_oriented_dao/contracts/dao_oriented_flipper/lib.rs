@@ -5,7 +5,9 @@
 #[openbrush::contract]
 // #[ink::contract(env = xvm_environment::XvmDefaultEnvironment)]
 mod dao_oriented_flipper {
-    use communication_base::communication_base::CommunicationBaseRef;
+    // use communication_base::communication_base::CommunicationBaseRef;
+    use default_contract::DefaultContractRef;
+
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::{ElectionInfo, *};
     use contract_helper::common::common_logics::{self, ContractBaseError};
@@ -63,11 +65,10 @@ mod dao_oriented_flipper {
             &mut self,
             command: String,
             vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-            caller_contract: AccountId,
+            caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
-                "dao_flip" => self._dao_flip(vec_of_parameters, caller_eoa, caller_contract),
+                "dao_flip" => self._dao_flip(vec_of_parameters, caller_eoa),
                 "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
@@ -95,20 +96,30 @@ mod dao_oriented_flipper {
         }
 
         #[ink(message)]
+        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
+            self.get_data(target_function)
+        }
+
+        #[ink(message)]
+        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
+            self._execute_interface(command, parameters_csv, caller_eoa)
+        }
+
+        #[ink(message)]
         pub fn get(&self) -> bool {
             self.value
         }
 
-        fn _dao_flip(&mut self, vec_of_parameters: Vec<String>, caller_eoa: AccountId,caller_contract: AccountId) -> core::result::Result<(), ContractBaseError> {
-            if self._modifier_only_call_from_proposal(caller_contract) == false {
+        fn _dao_flip(&mut self, vec_of_parameters: Vec<String>, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             self.value = !self.value;
             return Ok(())
         }
 
-        fn _modifier_only_call_from_proposal(&self, caller_contract: AccountId) -> bool {
-            self.proposal_manager_address == caller_contract
+        fn _modifier_only_call_from_proposal(&self) -> bool {
+            self.proposal_manager_address == self.env().caller()
         }
 
 

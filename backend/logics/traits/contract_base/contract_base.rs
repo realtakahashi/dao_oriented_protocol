@@ -16,13 +16,12 @@ pub type ContractBaseRef = dyn ContractBase;
 #[openbrush::trait_definition]
 pub trait ContractBase {
 
-    #[ink(message)]
-    fn execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
+    fn _execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId) -> core::result::Result<(), ContractBaseError>{
         let command_list = self._get_command_list();
         if command_list.iter().filter(|item| *item == &command).collect::<Vec<&String>>().len() == 0{
             return Err(ContractBaseError::CommnadNotFound);
         }
-        self._execute_interface(command, parameters_csv, caller_eoa, caller)
+        self._execute_interface_impl(command, parameters_csv, caller_eoa)
     }
 
     fn _set_application_core_address(
@@ -45,7 +44,7 @@ pub trait ContractBase {
         }
     }
 
-    fn _execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId, caller:AccountId) -> core::result::Result<(), ContractBaseError>{
+    fn _execute_interface_impl(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId) -> core::result::Result<(), ContractBaseError>{
         let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
             Some(_index) => parameters_csv
                 .split(&"$1$".to_string())
@@ -57,7 +56,7 @@ pub trait ContractBase {
                 rec
             }
         };
-        self._function_calling_switch(command, vec_of_parameters, caller_eoa, caller)
+        self._function_calling_switch(command, vec_of_parameters, caller_eoa)
     }
 
     fn _modifier_only_call_from_dao(&self,caller:AccountId) -> bool {
@@ -82,7 +81,7 @@ pub trait ContractBase {
 
     fn _get_command_list(&self) -> &Vec<String>; 
 
-    fn _function_calling_switch(&mut self, command:String, vec_of_parameters:Vec<String>, caller_eoa:AccountId, caller_contract:AccountId) -> core::result::Result<(), ContractBaseError>;
+    fn _function_calling_switch(&mut self, command:String, vec_of_parameters:Vec<String>, caller_eoa:AccountId) -> core::result::Result<(), ContractBaseError>;
 
     // fn _change_enable_or_not(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>;
 

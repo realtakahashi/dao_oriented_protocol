@@ -44,7 +44,6 @@ pub mod default_contract {
             command: String,
             _vec_of_parameters: Vec<String>,
             _caller_eoa: AccountId,
-            _caller: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             match command.as_str() {
                 "test_function" => self._test_function(),
@@ -69,6 +68,16 @@ pub mod default_contract {
                 ].to_vec(),
                 is_enable: false,            
             }
+        }
+
+        #[ink(message)]
+        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
+            self.get_data(target_function)
+        }
+
+        #[ink(message)]
+        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String,caller_eoa:AccountId) -> core::result::Result<(), ContractBaseError>{
+            self._execute_interface(command, parameters_csv, caller_eoa)
         }
 
         fn _test_function(&self) -> core::result::Result<(), ContractBaseError> {
