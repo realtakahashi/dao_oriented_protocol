@@ -472,14 +472,25 @@ mod default_election {
                         }
                     }
                 }
-                false => election_info.is_passed = Some(false),
+                false => {
+                    election_info.is_passed = Some(false);
+                    match self._update_proposal_info(proposal_id, 5, caller_eoa) {
+                        //5: PropsaolStatus -> Denied
+                        Ok(()) => (),
+                        Err(error) => {
+                            ink::env::debug_println!("########## default_election:_end_election [12] ");
+                            return Err(error);
+                        },
+                    }
+
+                }
             }
             self.election_list_with_proposal_id
                 .insert(&proposal_id, &election_info);
             self.election_list_with_election_id
                 .insert(&election_info.id, &election_info);
 
-            ink::env::debug_println!("########## default_election:_end_election [12] ");
+            ink::env::debug_println!("########## default_election:_end_election [13] ");
             Ok(())
         }
 

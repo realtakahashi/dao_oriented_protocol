@@ -1,7 +1,5 @@
 cd application_core
 cargo +nightly-2023-01-10 contract build
-cd ../communication_base
-cargo +nightly-2023-01-10 contract build
 cd ../default_election
 cargo +nightly-2023-01-10 contract build
 cd ../default_member

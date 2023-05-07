@@ -4,10 +4,8 @@
 mod application_core {
     use contract_helper::traits::contract_base::contract_base::contractbase_external::ContractBase;
     use contract_helper::traits::contract_base::contract_base::*;
-    use contract_helper::{
-        common::common_logics,
-        traits::types::types::{ProposalInfo, ProposalStatus, *},
-    };
+    use contract_helper::traits::types::types::*;
+    use contract_helper::traits::types::types::MemberInfo;
     use default_contract::default_contract::DefaultContractRef;
     use ink::prelude::string::String;
     use ink::prelude::string::ToString;
@@ -27,11 +25,19 @@ mod application_core {
         Other,
     }
 
+    #[derive(Debug, Clone, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    pub enum SoftwareType {
+        PreInstall,
+        NormalInstall,
+    }
+
     #[derive(Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
     pub struct SoftwareInfo {
         id: u128,
         kind: SoftwareKind,
+        software_type: SoftwareType,
         name: String,
         contract_address: AccountId,
         description: String,
@@ -58,7 +64,9 @@ mod application_core {
     pub struct ApplicationCore {
         installed_software_list_with_address: Mapping<AccountId, SoftwareInfo>,
         installed_software_list_with_id: Mapping<u128, SoftwareInfo>,
+        pre_installed_software_list_with_id: Mapping<u128, SoftwareInfo>,
         next_software_id: u128,
+        next_pre_software_id: u128,
         pre_install_member_manager: Option<AccountId>,
         pre_install_proposal_manager: Option<AccountId>,
         pre_install_election: Option<AccountId>,
@@ -86,18 +94,48 @@ mod application_core {
         #[ink(message)]
         pub fn set_pre_install_member_manager(&mut self, pre_install_member_manager: AccountId)-> Result<()>{
             self.pre_install_member_manager = Some(pre_install_member_manager);
+            let software_info = SoftwareInfo {
+                id: self.next_pre_software_id,
+                kind: SoftwareKind::MemberManager,
+                software_type: SoftwareType::PreInstall,
+                name: "Member Manager".to_string(),
+                description: "PreInstall Member Manager.".to_string(),
+                contract_address: pre_install_member_manager,
+            };
+            self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
+            self.next_pre_software_id += 1;
             self._set_application_core_address(pre_install_member_manager)
         }
 
         #[ink(message)]
         pub fn set_pre_install_proposal_manager(&mut self, pre_install_proposal_manager: AccountId)-> Result<()>{
             self.pre_install_proposal_manager = Some(pre_install_proposal_manager);
+            let software_info = SoftwareInfo {
+                id: self.next_pre_software_id,
+                kind: SoftwareKind::MemberManager,
+                software_type: SoftwareType::PreInstall,
+                name: "Proposal Manager".to_string(),
+                description: "PreInstall Proposal Manager.".to_string(),
+                contract_address: pre_install_proposal_manager,
+            };
+            self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
+            self.next_pre_software_id += 1;
             self._set_application_core_address(pre_install_proposal_manager)
         }
 
         #[ink(message)]
         pub fn set_pre_install_election(&mut self, pre_install_election: AccountId)-> Result<()>{
             self.pre_install_election = Some(pre_install_election);
+            let software_info = SoftwareInfo {
+                id: self.next_pre_software_id,
+                kind: SoftwareKind::MemberManager,
+                software_type: SoftwareType::PreInstall,
+                name: "Election Manager".to_string(),
+                description: "PreInstall Election Manager.".to_string(),
+                contract_address: pre_install_election,
+            };
+            self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
+            self.next_pre_software_id += 1;
             self._set_application_core_address(pre_install_election)
         }
 
@@ -116,6 +154,18 @@ mod application_core {
             let mut result: Vec<SoftwareInfo> = Vec::new();
             for i in 0..self.next_software_id {
                 match self.installed_software_list_with_id.get(&i) {
+                    Some(value) => result.push(value),
+                    None => (),
+                }
+            }
+            result
+        }
+
+        #[ink(message)]
+        pub fn get_pre_installed_software(&self) -> Vec<SoftwareInfo> {
+            let mut result: Vec<SoftwareInfo> = Vec::new();
+            for i in 0..self.next_pre_software_id {
+                match self.pre_installed_software_list_with_id.get(&i) {
                     Some(value) => result.push(value),
                     None => (),
                 }
@@ -215,6 +265,7 @@ mod application_core {
                         Ok(()) => (),
                         Err(error) => return Err(error),
                     }
+                    // todo: update proposal status Executed -> Finished
                     self.next_software_id += 1;
                     ink::env::debug_println!("########## application_core:install_software [5] ");
                     Ok(())
@@ -256,6 +307,37 @@ mod application_core {
             self._uninstall_software_impl(software_id)
         }
 
+        #[ink(message)]
+        pub fn get_proposal_info_list(&self) -> Vec<ProposalInfo> {
+            self._get_proposal_info_list()
+        }
+
+        #[ink(message)]
+        pub fn get_member_list(&self) -> Vec<MemberInfo> {
+            self._get_member_info_list()
+        }
+
+        #[ink(message)]
+        pub fn get_election_commision_list(&self) -> Vec<MemberInfo> {
+            self._get_election_commision_list()
+        }
+
+        #[ink(message)]
+        pub fn check_election_commisioner(&self) -> bool {
+            let list = self._get_election_commision_list();
+            for member_info in list {
+                if member_info.address == self.env().caller() {
+                    return true;
+                }
+            }
+            false
+        }
+
+        #[ink(message)]
+        pub fn get_election_info_list(&self) -> Vec<ElectionInfo> {
+            self._get_election_info_list()
+        }
+
         fn _uninstall_software_impl(&mut self, software_id: u128) -> Result<()> {
             let software_info = match self.installed_software_list_with_id.get(&software_id) {
                 Some(value) => value,
@@ -265,7 +347,7 @@ mod application_core {
             self.installed_software_list_with_address
                 .remove(&software_info.contract_address);
             self.installed_software_list_with_id.remove(&software_id);
-
+            // todo: update proposal status Executed -> Finished
             Ok(())
         }
 
@@ -322,20 +404,16 @@ mod application_core {
         }
 
         fn _modifier_only_call_from_member_eoa(&self) -> bool {
-            match self._get_member_info_list() {
-                Ok(member_list) => {
-                    for member_info in member_list {
-                        if member_info.address == self.env().caller() {
-                            return true;
-                        };
-                    }
-                }
-                Err(_) => return false,
+            let member_list = self._get_member_info_list();
+            for member_info in member_list {
+                if member_info.address == self.env().caller() {
+                    return true;
+                };
             }
             false
         }
 
-        fn _get_member_info_list(&self) -> core::result::Result<Vec<MemberInfo>, Error> {
+        fn _get_member_info_list(&self) -> Vec<MemberInfo> {
             let member_manager_address = self._get_member_manager_address();
             let mut result: Vec<MemberInfo> = Vec::new();
             // let instance: CommunicationBaseRef =
@@ -350,10 +428,31 @@ mod application_core {
                 let array_value: &[u8] = value.as_slice().try_into().unwrap();
                 match MemberInfo::decode(&mut array_value.clone()) {
                     Ok(value) => result.push(value),
-                    Err(_) => return Err(Error::Custom("GotAnErrorGettingMemberInfo".to_string())),
+                    Err(_) => (),
                 };
             }
-            Ok(result)
+            result
+        }
+
+        fn _get_election_commision_list(&self) -> Vec<MemberInfo> {
+            let member_manager_address = self._get_member_manager_address();
+            let mut result: Vec<MemberInfo> = Vec::new();
+            // let instance: CommunicationBaseRef =
+            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
+            // let get_value: Vec<Vec<u8>> = instance
+            //     .get_data_from_contract(member_manager_address, "get_member_list".to_string());
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(member_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_election_commisioner_list".to_string());
+
+            for value in get_value.iter() {
+                let array_value: &[u8] = value.as_slice().try_into().unwrap();
+                match MemberInfo::decode(&mut array_value.clone()) {
+                    Ok(value) => result.push(value),
+                    Err(_) => (),
+                };
+            }
+            result
         }
 
         fn _get_member_manager_address(&self) -> AccountId {
@@ -379,38 +478,53 @@ mod application_core {
             }
         }
 
+        fn _get_election_info_list(&self) -> Vec<ElectionInfo> {
+            let mut result:Vec<ElectionInfo> = Vec::new();
+            let election_address = self._get_election_address();
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(election_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_election_info_list".to_string());
+            for value in get_value.iter() {
+                let array_value: &[u8] = value.as_slice().try_into().unwrap();
+                match ElectionInfo::decode(&mut array_value.clone()) {
+                    Ok(value) => result.push(value),
+                    Err(_) => (),
+                }
+            }
+            result
+        }
+
+        fn _get_proposal_info_list(&self) -> Vec<ProposalInfo> {
+            let mut result:Vec<ProposalInfo> = Vec::new();
+            let proposal_manager_address = self._get_proposal_manager_address();
+            let instance: DefaultContractRef =
+                ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
+            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_proposal_info_list".to_string());
+            for value in get_value.iter() {
+                let array_value: &[u8] = value.as_slice().try_into().unwrap();
+                match ProposalInfo::decode(&mut array_value.clone()) {
+                    Ok(value) => result.push(value),
+                    Err(_) => (),
+                }
+            }
+            result
+        }
+
         fn _get_proposal_info(
             &self,
             proposal_id: u128,
         ) -> core::result::Result<ProposalInfo, Error> {
-            let proposal_manager_address = self._get_proposal_manager_address();
-            // let instance: CommunicationBaseRef =
-            //     ink::env::call::FromAccountId::from_account_id(self.communication_base_address.unwrap());
-            // let get_value: Vec<Vec<u8>> = instance
-            //     .get_data_from_contract(proposal_manager_address, "get_proposal_info_list".to_string());
-
-            let instance: DefaultContractRef =
-                ink::env::call::FromAccountId::from_account_id(proposal_manager_address);
-            let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_proposal_info_list".to_string());
-
-            for value in get_value.iter() {
-                let array_value: &[u8] = value.as_slice().try_into().unwrap();
-                match ProposalInfo::decode(&mut array_value.clone()) {
-                    Ok(value) => {
-                        if value.id == proposal_id {
-                            if value.status != ProposalStatus::Executed {
-                                return Err(Error::Custom(
-                                    "ThisProposalStatusIdNotExecuted.".to_string(),
-                                ));
-                            } else {
-                                return Ok(value);
-                            }
-                        }
+            let proposal_info_list = self._get_proposal_info_list();
+            for value in proposal_info_list.iter() {
+                if value.id == proposal_id {
+                    if value.status != ProposalStatus::Executed {
+                        return Err(Error::Custom(
+                            "ThisProposalStatusIdNotExecuted.".to_string(),
+                        ));
+                    } else {
+                        return Ok(value.clone());
                     }
-                    Err(_) => {
-                        return Err(Error::Custom("GotAnErrorGettingProposalInfo".to_string()))
-                    }
-                };
+                }
             }
             return Err(Error::Custom("TargetProposalDoesNotFind".to_string()));
         }
@@ -456,6 +570,7 @@ mod application_core {
                     let result = SoftwareInfo {
                         id: self.next_software_id,
                         kind: self._change_string_2_software_kind(&parameters[0]),
+                        software_type: SoftwareType::NormalInstall,
                         name: parameters[1].clone(),
                         description: parameters[2].clone(),
                         contract_address: contract_address,
@@ -484,6 +599,16 @@ mod application_core {
                 }
             }
             return self.pre_install_proposal_manager.unwrap();
+        }
+
+        fn _get_election_address(&self) -> AccountId {
+            let list = self.get_installed_software();
+            for info in list {
+                if info.kind == SoftwareKind::Election {
+                    return info.contract_address;
+                }
+            }
+            return self.pre_install_election.unwrap();
         }
 
         fn _check_installed_software(&self, taraget_contract_address:AccountId) -> bool {
