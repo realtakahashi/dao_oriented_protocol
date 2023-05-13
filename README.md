@@ -13,28 +13,29 @@
 - Contracts installed in "application_core" must implement a trait called "contract_base" to achieve the basic functionality of the "DAO Oriented Protocol".
 - It is possible to implement all features from scratch. However, basic DAO functions are already implemented as pre-installed functions. You can also use it.
 ## Project Structure
-- "backend" -> "contracts"
+- "protocol"
   -  The whole body of "DAO Oriented Protocol" is stored here.
   - "application_core"
     - A core contract that manages the entire "DAO Oriented Protocol".
-  - "default_contract"
-    - This is a fictitious contract for the interface implemented to make each contract in the "DAO Oriented Protocol" communicate with each other.
-  - "default_election"
-    - It is one of the preintall contracts that provides the ability to vote and vote within the protocol.
-  - "default_member"
-    - It is one of the preintall contracts that provides the ability to manage members and election commissioners within the protocol.
-  - "default_prposal"
-    - It is one of the plaintall contracts that provides the ability to manage proposals within the protocol.
-- "backend" -> "logics"
-  - "common"
-     - A program that implements common functions such as type conversion that are required in the protocol is stored.
-  - "traits"
-    - "contract_base"
-      - All contracts intended to be installed in "application_core" must implement this trait.
-    - "errors"
-      - Common error definition.
-    - "types"
-      - Common type definition.
+  - pre_insrtall
+    - "default_contract"
+      - This is a fictitious contract for the interface implemented to make each contract in the "DAO Oriented Protocol" communicate with each other.
+    - "default_election"
+      - It is one of the preintall contracts that provides the ability to vote and vote within the protocol.
+    - "default_member"
+      - It is one of the preintall contracts that provides the ability to manage members and election commissioners within the protocol.
+    - "default_prposal"
+      - It is one of the plaintall contracts that provides the ability to manage proposals within the protocol.
+  - "logics"
+    - "common"
+      - A program that implements common functions such as type conversion that are required in the protocol is stored.
+    - "traits"
+      - "contract_base"
+        - All contracts intended to be installed in "application_core" must implement this trait.
+      - "errors"
+        - Common error definition.
+      - "types"
+        - Common type definition.
 - "example"
   - "flipper_oriented_dao"
     - This is a flipper dApp sample using "DAO Oriented Protocol". 
