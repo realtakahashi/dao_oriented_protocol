@@ -46,4 +46,4 @@
   - The "flip" function (named "dao_flip" function this time) is implemented so that it can only be called from the "proposal manger" pre-installed in the protocol.
   - That is, the value will not be reversed unless it is proposed for action and voted on by the members.
 ## More detail
-- It's still incomplete, but I plan to write more detailed content on my medium (https://realtakahashi-work.medium.com/).
+- Please check this article (https://realtakahashi-work.medium.com/dao-oriented-protocol-aiming-to-make-all-apps-sustainable-47501a4b8d04).

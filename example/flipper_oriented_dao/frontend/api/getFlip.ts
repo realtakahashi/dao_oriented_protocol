@@ -1,5 +1,5 @@
 import { ContractPromise } from "@polkadot/api-contract";
-import DaoOrientedFlipperAbi from "../../../../target/ink/dao_oriented_flipper/dao_oriented_flipper.json";
+import DaoOrientedFlipperAbi from "../contract_abi/dao_oriented_flipper.json";
 import { getGasLimitForNotDeploy } from "./apiUtils";
 
 export const getFlipState = async (

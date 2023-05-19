@@ -1,5 +1,5 @@
 import { ContractPromise } from "@polkadot/api-contract";
-import ApplicationCoreAbi from "../../../../target/ink/application_core/application_core.json";
+import ApplicationCoreAbi from "../contract_abi/application_core.json";
 import {
   checkEventsAndInculueError,
   getGasLimitForNotDeploy,

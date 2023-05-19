@@ -33,7 +33,7 @@ const ElectionList = () => {
             ? electionList.map((election) => {
                 return (
                   <div key={election.id}>
-                    {election.id != "" && (
+                    {/* {election.id != "" && ( */}
                       <div className="m-5  max-w-sm rounded overflow-hidden shadow-lg bg-black border-4 border-white">
                         <div className="px-6 py-4">
                           <div className="font-bold mb-2 text-white">
@@ -70,7 +70,7 @@ const ElectionList = () => {
                           </p>
                         </div>
                       </div>
-                    )}
+                    {/* )} */}
                     ;
                   </div>
                 );
