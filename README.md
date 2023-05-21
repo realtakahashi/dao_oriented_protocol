@@ -45,5 +45,7 @@
   - This contract is a normal flipper contract with the addition of "DAO Oriented Protocol".
   - The "flip" function (named "dao_flip" function this time) is implemented so that it can only be called from the "proposal manger" pre-installed in the protocol.
   - That is, the value will not be reversed unless it is proposed for action and voted on by the members.
+### Community Protocol
+- Please Check this article(https://realtakahashi-work.medium.com/aiming-for-a-fairer-society-will-dao-change-society-ca5f305294c0)
 ## More detail
 - Please check this article (https://realtakahashi-work.medium.com/dao-oriented-protocol-aiming-to-make-all-apps-sustainable-47501a4b8d04).

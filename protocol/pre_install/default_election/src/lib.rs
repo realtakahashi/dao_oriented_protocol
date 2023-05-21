@@ -105,7 +105,7 @@ mod default_election {
         // ) -> core::result::Result<(), ContractBaseError> {
         //     match self.dao_address {
         //         Some(value) => {
-        //             if !self._modifier_only_call_from_dao(value) {
+        //             if !self._modifier_only_call_from_application_core(value) {
         //                 return Err(ContractBaseError::InvalidCallingFromOrigin);
         //             }
         //         }
@@ -209,7 +209,7 @@ mod default_election {
         // }
 
         fn _set_member_manager_address(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
-            if self._modifier_only_call_from_dao(self.env().caller()) == false{
+            if self._modifier_only_call_from_application_core(self.env().caller()) == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             match self.member_manager_address {
@@ -229,7 +229,7 @@ mod default_election {
         }
 
         fn _set_proposal_manager_address(&mut self, vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
-            if self._modifier_only_call_from_dao(self.env().caller()) == false{
+            if self._modifier_only_call_from_application_core(self.env().caller()) == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             match self.proposal_manager_address {
@@ -295,7 +295,7 @@ mod default_election {
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_create_election[1] ");
 
-            if self._modifier_only_call_from_dao(self.env().caller()) == false {
+            if self._modifier_only_call_from_application_core(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             };
             ink::env::debug_println!("########## default_election:_create_election[2] ");
@@ -372,7 +372,7 @@ mod default_election {
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_vote [1] ");
 
-            if self._modifier_only_call_from_dao(self.env().caller()) == false {
+            if self._modifier_only_call_from_application_core(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             ink::env::debug_println!("########## default_election:_vote [2] ");
@@ -446,7 +446,7 @@ mod default_election {
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!("########## default_election:_end_election [1] ");
 
-            if self._modifier_only_call_from_dao(self.env().caller()) == false {
+            if self._modifier_only_call_from_application_core(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             ink::env::debug_println!("########## default_election:_end_election [2]: vec_of_parameters:{:?}",vec_of_parameters);

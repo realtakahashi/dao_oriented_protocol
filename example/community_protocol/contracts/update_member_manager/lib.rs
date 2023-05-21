@@ -1,14 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[openbrush::contract]
-mod default_member {
-    // use communication_base::communication_base::CommunicationBaseRef;
+mod update_member_manager {
     use default_contract::DefaultContractRef;
-
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
-    // use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
     use openbrush::storage::Mapping;
@@ -16,20 +13,20 @@ mod default_member {
 
     #[ink(storage)]
     #[derive(Default)]
-    pub struct DefaultMember {
+    pub struct UpdateMemberManager {
         member_list_with_id: Mapping<u128, MemberInfo>,
         member_list_with_eoa: Mapping<AccountId, MemberInfo>,
         next_member_id: u128,
         application_core_address: Option<AccountId>,
         command_list: Vec<String>,
-        // communication_base_ref: Option<AccountId>,
         is_enable: bool,
         proposal_manager_address: Option<AccountId>,
         election_commisioner_list: Mapping<u128, AccountId>,
         next_commisioner_id: u128,
+        community_protocol_address: Option<AccountId>,
     }
 
-    impl ContractBase for DefaultMember {
+    impl ContractBase for UpdateMemberManager {
         #[ink(message)]
         fn get_application_core_address(&self) -> Option<AccountId> {
             self.application_core_address
@@ -80,7 +77,7 @@ mod default_member {
             match command.as_str() {
                 "add_member" => self._add_member(vec_of_parameters, caller_eoa),
                 "delete_member" => self._delete_member(vec_of_parameters, caller_eoa),
-                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                "delete_member_from_commucation_protocol" => self._delete_member_from_commucation_protocol(vec_of_parameters),
                 "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
                 "change_election_commisioner" => self._change_election_commisioner(
                     vec_of_parameters,
@@ -91,67 +88,14 @@ mod default_member {
                     caller_eoa
                 ),
                 "set_proposal_manager_address" => self._set_proposal_manager_address(vec_of_parameters),
-                // "set_election_manager_address" => self._set_election_manager_address(vec_of_parameters),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
         }
-
-        // fn _change_enable_or_not(
-        //     &mut self,
-        //     vec_of_parameters: Vec<String>,
-        // ) -> core::result::Result<(), ContractBaseError> {
-        //     match self.dao_address {
-        //         Some(value) => {
-        //             if !self._modifier_only_call_from_application_core(value) {
-        //                 return Err(ContractBaseError::InvalidCallingFromOrigin);
-        //             }
-        //         },
-        //         None => return Err(ContractBaseError::TheAddressNotFound),
-        //     };
-        //     match vec_of_parameters.len() {
-        //         1 => {
-        //             let proposal_id = match vec_of_parameters[0].parse::<u128>() {
-        //                 Ok(value) => value,
-        //                 Err(_) => return Err(ContractBaseError::ParameterInvalid),
-        //             };
-        //             let proposal_info = match self._get_proposal_info(proposal_id) {
-        //                 Ok(value) => value,
-        //                 Err(_) => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //             match self._valid_proposal_info_for_change_enabel_or_not(&proposal_info) {
-        //                 true => (),
-        //                 false => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //             let vec_of_params =
-        //                 common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
-        //             match vec_of_params.len() {
-        //                 1 => match bool::from_str(&vec_of_params[0]) {
-        //                     Ok(value) => self.is_enable = value,
-        //                     Err(_) => {
-        //                         return Err(ContractBaseError::Custom(
-        //                             "Invalid Proposal.".to_string(),
-        //                         ))
-        //                     }
-        //                 },
-        //                 _ => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //         }
-        //         _ => return Err(ContractBaseError::ParameterInvalid),
-        //     }
-        //     Ok(())
-        // }
     }
 
-    impl DefaultMember {
+    impl UpdateMemberManager {
         #[ink(constructor)]
-        // pub fn new(communication_base_ref: AccountId, owner_name: String) -> Self {
-        pub fn new(owner_name: String) -> Self {
+        pub fn new(first_member_name:String, community_protocol_address:AccountId) -> Self {
             let mut instance = Self::default();
             instance.command_list.push("add_member".to_string());
             instance.command_list.push("delete_member".to_string());
@@ -165,11 +109,58 @@ mod default_member {
                 .push("update_proposal_manager_address".to_string());
             instance.command_list.push("set_proposal_manager_address".to_string());
             instance.command_list.push("set_election_manager_address".to_string());
+            instance.command_list.push("delete_member_from_commucation_protocol".to_string());
+            instance.community_protocol_address = Some(community_protocol_address);
+            
+            instance._add_first_member(first_member_name);
 
-            // instance.communication_base_ref = Some(communication_base_ref);
-            instance._add_first_member(owner_name);
             instance
         }
+
+        // #[ink(constructor)]
+        // pub fn new(pre_install_member_manager_address:AccountId, communication_protocol_address:AccountId) -> Self {
+        //     let mut instance = Self::default();
+        //     instance.command_list.push("add_member".to_string());
+        //     instance.command_list.push("delete_member".to_string());
+        //     // instance.command_list.push("change_enable_or_not".to_string());
+        //     instance.command_list.push("set_application_core_address".to_string());
+        //     instance
+        //         .command_list
+        //         .push("change_election_commisioner".to_string());
+        //     instance
+        //         .command_list
+        //         .push("update_proposal_manager_address".to_string());
+        //     instance.command_list.push("set_proposal_manager_address".to_string());
+        //     instance.command_list.push("set_election_manager_address".to_string());
+        //     instance.command_list.push("delete_member_from_commucation_protocol".to_string());
+        //     instance.communication_protocol_address = Some(communication_protocol_address);
+            
+        //     instance._migrate_member_data(pre_install_member_manager_address);
+
+        //     instance
+        // }
+
+        // /// I'm assuming you'll update it before you start using it this time.
+        // fn _migrate_member_data(&mut self,pre_install_member_manager_address: AccountId) -> core::result::Result<(), ContractBaseError>{
+        //     let instance: DefaultContractRef =
+        //         ink::env::call::FromAccountId::from_account_id(pre_install_member_manager_address);
+        //     let get_value: Vec<Vec<u8>> = instance.extarnal_get_data_interface("get_member_list".to_string());
+
+        //     if get_value.len() > 1 {
+        //         return Err(ContractBaseError::Custom("UnexpectedMigrationData".to_string()));
+        //     }
+        //     for value in get_value.iter() {
+        //         let array_value: &[u8] = value.as_slice().try_into().unwrap();
+        //         match MemberInfo::decode(&mut array_value.clone()) {
+        //             Ok(value) => {
+        //                 self._add_first_member(value.name);
+        //                 return Ok(());
+        //             },
+        //             Err(_) => (),
+        //         };
+        //     }
+        //     return Err(ContractBaseError::Custom("UnexpectedMigrationError".to_string()));
+        // }
 
         #[ink(message)]
         pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
@@ -208,18 +199,6 @@ mod default_member {
             }
             result
         }
-
-        // #[ink(message)]
-        // pub fn set_proposal_manager_address(
-        //     &mut self,
-        //     proposal_manager_address: AccountId,
-        // ) -> core::result::Result<(), ContractBaseError> {
-        //     match self.proposal_manager_address {
-        //         Some(_value) => return Err(ContractBaseError::TheAddressNotFound),
-        //         None => self.proposal_manager_address = Some(proposal_manager_address),
-        //     }
-        //     Ok(())
-        // }
 
         #[ink(message)]
         pub fn get_proposal_manager_address(&self) -> Option<AccountId> {
@@ -444,7 +423,7 @@ mod default_member {
         }
 
         fn _delete_member(
-            &self,
+            &mut self,
             vec_of_parameters: Vec<String>,
             caller_eoa: AccountId
         ) -> core::result::Result<(), ContractBaseError> {
@@ -471,6 +450,38 @@ mod default_member {
             Ok(())
         }
 
+        fn _delete_member_from_commucation_protocol(            
+            &mut self,
+            vec_of_parameters: Vec<String>
+            // caller_eoa: AccountId
+        ) -> core::result::Result<(), ContractBaseError> {
+            if self._modifier_only_call_from_communication_protocol() == false {
+                return Err(ContractBaseError::InvalidCallingFromOrigin);
+            }
+            // if self._modifier_only_call_from_member_eoa(caller_eoa) == false {
+            //     return Err(ContractBaseError::Custom("Only Member does.".to_string()));
+            // }
+
+            if vec_of_parameters.len() != 1{
+                return Err(ContractBaseError::ParameterInvalid);
+            }
+            let target_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[0].clone()) {
+                Some(value) => value,
+                None => return Err(ContractBaseError::ParameterInvalid),
+            };
+            let member_info = match self.member_list_with_eoa.get(&target_address) {
+                Some(value) => value,
+                None => return Err(ContractBaseError::ParameterInvalid),
+            };
+            self.member_list_with_id.remove(&member_info.id);
+            self.member_list_with_eoa.remove(&target_address);
+            Ok(())
+        }
+
+        fn _modifier_only_call_from_communication_protocol(&self) -> bool {
+            self.community_protocol_address == Some(self.env().caller())
+        }
+
         fn _modifier_only_call_from_member_eoa(&self, caller_eoa: AccountId) -> bool {
             match self.member_list_with_eoa.get(&caller_eoa) {
                 Some(_value) => true,
@@ -483,6 +494,9 @@ mod default_member {
         }
     }
 
+    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
+    /// module and test functions are marked with a `#[test]` attribute.
+    /// The below code is technically just normal Rust code.
     #[cfg(test)]
     mod tests {
         /// Imports all the definitions from the outer scope so we can use them here.
@@ -491,17 +505,17 @@ mod default_member {
         /// We test if the default constructor does its job.
         #[ink::test]
         fn default_works() {
-            let default_member = DefaultMember::default();
-            assert_eq!(default_member.get(), false);
+            let update_member_manager = UpdateMemberManager::default();
+            assert_eq!(update_member_manager.get(), false);
         }
 
         /// We test a simple use case of our contract.
         #[ink::test]
         fn it_works() {
-            let mut default_member = DefaultMember::new(false);
-            assert_eq!(default_member.get(), false);
-            default_member.flip();
-            assert_eq!(default_member.get(), true);
+            let mut update_member_manager = UpdateMemberManager::new(false);
+            assert_eq!(update_member_manager.get(), false);
+            update_member_manager.flip();
+            assert_eq!(update_member_manager.get(), true);
         }
     }
 }

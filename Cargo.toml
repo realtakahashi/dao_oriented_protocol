@@ -7,5 +7,7 @@ members = [
     "protocol/pre_install/default_proposal",
     "protocol/logics",
     "example/flipper_oriented_dao/contracts/dao_oriented_flipper",
-
+    "example/community_protocol/contracts/community_protocol",
+    "example/community_protocol/contracts/update_member_manager",
+    "example/community_protocol/contracts/community_list_manager",
 ]

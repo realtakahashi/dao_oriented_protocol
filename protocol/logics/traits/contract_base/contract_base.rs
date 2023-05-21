@@ -59,9 +59,9 @@ pub trait ContractBase {
         self._function_calling_switch(command, vec_of_parameters, caller_eoa)
     }
 
-    fn _modifier_only_call_from_dao(&self,caller:AccountId) -> bool {
-        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao get_application_core_address:{:?}",self.get_application_core_address());
-        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_dao caller:{:?}",caller);
+    fn _modifier_only_call_from_application_core(&self,caller:AccountId) -> bool {
+        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
+        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
 
         match self.get_application_core_address() {
             Some(value) => value == caller,

@@ -18,6 +18,15 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## Local environment valiables example
+```
+NEXT_PUBLIC_DAO_ORIENTED_FLIPPER_CONTRACT_ADDRESS=XMx2AL7FUhHCBfPYqHausZAU4ARXr7bAsUWNH3cpDbPJEE1
+NEXT_PUBLIC_APPLICATION_CORE_CONTRACT_ADDRESS=XoHMMnqChwiU13LZZABQLNz3vTbcnY347K55HVRn2VvScKE
+NEXT_PUBLIC_DEFAULT_ELECTION_CONTRACT_ADDRESS=XFQ4Tm7LDfxrNq2gRMmeotWvrEtMahsTQ6HxnYZCLSTQUre
+NEXT_PUBLIC_DEFAULT_PROPOSAL_CONTRACT_ADDRESS=XpiYVNbGcXM1bB3Cke9h7uJ3RSZfisqqq4XbtdErcZJZFc6
+NEXT_PUBLIC_BLOCKCHAIN_URL=ws://127.0.0.1:9944
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
