@@ -36,16 +36,30 @@
         - Common error definition.
       - "types"
         - Common type definition.
+  - "test"
+    - The following tests are implemented in "protocol_test.ts".
+      - Deploying all the contracts needed to make the protocol work.
+      - Initialization function calls required to make the protocol work.
+      - Testing the proposal function for adding members.
 - "example"
   - "flipper_oriented_dao"
     - This is a flipper dApp sample using "DAO Oriented Protocol". 
+  - "community_protocol"
+    - This "Community Protocol" is a dApp based on DAO.
 ## An example of a dApp using the "DAO Oriented Protocol"
 ### Flipper Oriented Dao
 - "dao_oriented_flipper" contract
   - This contract is a normal flipper contract with the addition of "DAO Oriented Protocol".
   - The "flip" function (named "dao_flip" function this time) is implemented so that it can only be called from the "proposal manger" pre-installed in the protocol.
   - That is, the value will not be reversed unless it is proposed for action and voted on by the members.
+- frontend apps
+  - A minimal front-end application to run this sample contract.
+- test
+  - Testing from deployment to initial configuration of "DAO Oriented Protocol".
+  - Deployment of contract to operate "Dao Oriented Flipper", installation to "Application Core", implementation of flip using DAO mechanism. 
 ### Community Protocol
-- Please Check this article(https://realtakahashi-work.medium.com/aiming-for-a-fairer-society-will-dao-change-society-ca5f305294c0)
+- This is the purpose of the Community Protocol. Please Check this article(https://realtakahashi-work.medium.com/aiming-for-a-fairer-society-will-dao-change-society-ca5f305294c0)
+- Please refer to this article for thoughts on the features and design of the Community Protocol.(https://medium.com/@realtakahashi-work/community-protocol-677916ce0dd0)
+
 ## More detail
 - Please check this article (https://realtakahashi-work.medium.com/dao-oriented-protocol-aiming-to-make-all-apps-sustainable-47501a4b8d04).
