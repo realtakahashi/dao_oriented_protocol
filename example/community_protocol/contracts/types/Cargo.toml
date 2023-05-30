@@ -1,0 +1,40 @@
+[package]
+name = "community_types"
+version = "0.1.0"
+authors = ["Shin.Takahashi"]
+edition = "2021"
+
+[dependencies]
+ink = { version = "4.0.0-rc", default-features = false }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
+
+openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = [ "ownable", "reentrancy_guard"] }
+# bs58 = { version = "0.4.0", default-features = false }
+# hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+# communication_base = { version = "0.1.0", path = "../communication_base", default-features = false, features = ["ink-as-dependency"] }
+
+[lib]
+path = "types.rs"
+# crate-type = ["cdylib","rlib"]
+
+[features]
+default = ["std"]
+std = [
+"ink/std",
+    # "ink_primitives/std",
+    # "ink_metadata",
+    # "ink_metadata/std",
+    # "ink_env/std",
+    # "ink_storage/std",
+    # "ink_lang/std",
+    "scale/std",
+    "scale-info",
+    "scale-info/std",
+    "openbrush/std",
+    # "bs58/std",
+    # "hex/std",
+]
+
+ink-as-dependency = []

@@ -1,5 +1,5 @@
 [package]
-name = "community_list_manager"
+name = "community_token"
 version = "0.1.0"
 authors = ["[your_name] <[your_email]>"]
 edition = "2021"
@@ -9,14 +9,13 @@ ink = { version = "4.0.0-rc", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2.3", default-features = false, features = ["derive"], optional = true }
-openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = ["access_control", "ownable"] }
+openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = ["psp22","access_control", "ownable"] }
 contract_helper = { path = "../../../../protocol/logics", default-features = false }
 default_contract = { version = "0.1.0", path = "../../../../protocol/pre_install/default_contract", default-features = false, features = ["ink-as-dependency"] }
 community_types = { path = "../types", default-features = false }
 
 [lib]
 path = "lib.rs"
-crate-type = ["rlib"]
 
 [features]
 default = ["std"]

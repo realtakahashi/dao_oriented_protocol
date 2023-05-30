@@ -4,6 +4,7 @@ pub use self::community_list_manager::{CommunityListManager, CommunityListManage
 
 #[openbrush::contract]
 mod community_list_manager {
+    use community_types::types::{ CommunityInfoWithId, RewardInfo };
     use contract_helper::common::common_logics;
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
@@ -14,30 +15,30 @@ mod community_list_manager {
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
     use openbrush::{storage::Mapping, traits::Storage};
-    use scale::Decode;
+    use scale::{ Decode, Encode };
 
-    #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
-    #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
-    pub struct CommunityInfo {
-        id: u128,
-        name:String,
-        contract_address:Option<AccountId>,
-        contents:String,
-    }
+    // #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
+    // #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    // pub struct CommunityInfo {
+    //     id: u128,
+    //     name:String,
+    //     contract_address:Option<AccountId>,
+    //     contents:String,
+    // }
 
-    #[derive( Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
-    #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
-    pub struct RewardInfo {
-        address:AccountId,
-        amount:Balance,
-    }
+    // #[derive( Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
+    // #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    // pub struct RewardInfo {
+    //     address:AccountId,
+    //     amount:Balance,
+    // }
 
     #[ink(storage)]
     #[derive(Default, Storage)]
     pub struct CommunityListManager {
-        community_list_with_address: Mapping<AccountId, CommunityInfo>,
-        community_list_with_id: Mapping<u128, CommunityInfo>,
-        request_list4adding_list: Mapping<u128, CommunityInfo>,
+        community_list_with_address: Mapping<AccountId, CommunityInfoWithId>,
+        community_list_with_id: Mapping<u128, CommunityInfoWithId>,
+        request_list4adding_list: Mapping<u128, CommunityInfoWithId>,
         next_community_id: u128,
         next_request_id: u128,
         command_list: Vec<String>,
@@ -55,6 +56,15 @@ mod community_list_manager {
         #[ink(message)]
         fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
+            match target_function.as_str() {
+                "get_community_list" => {
+                    let list: Vec<CommunityInfoWithId> = self.get_commmunity_list();
+                    for value in list.iter() {
+                        result.push(value.encode());
+                    }
+                },
+                _ => (),
+            }
             result
         }
 
@@ -114,8 +124,8 @@ mod community_list_manager {
         }
 
         #[ink(message)]
-        pub fn get_commmunity_list(&self) -> Vec<CommunityInfo> {
-            let mut result:Vec<CommunityInfo> = Vec::new();
+        pub fn get_commmunity_list(&self) -> Vec<CommunityInfoWithId> {
+            let mut result:Vec<CommunityInfoWithId> = Vec::new();
             for i in 0..self.next_community_id {
                 match self.community_list_with_id.get(&i) {
                     Some(value) => result.push(value),
@@ -126,8 +136,8 @@ mod community_list_manager {
         }
 
         #[ink(message)]
-        pub fn get_request_list4adding(&self) -> Vec<CommunityInfo> {
-            let mut result:Vec<CommunityInfo> = Vec::new();
+        pub fn get_request_list4adding(&self) -> Vec<CommunityInfoWithId> {
+            let mut result:Vec<CommunityInfoWithId> = Vec::new();
             for i in 0..self.next_request_id {
                 match self.request_list4adding_list.get(&i) {
                     Some(value) => result.push(value),
@@ -146,10 +156,9 @@ mod community_list_manager {
             if self.env().is_contract(&self.env().caller()) == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
-            if vec_of_parameters.len() != 3 {
+            if vec_of_parameters.len() != 4 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
-            let name = vec_of_parameters[0].clone();
             let contract_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[1].clone()){
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
@@ -160,12 +169,16 @@ mod community_list_manager {
             if self.community_list_with_address.get(&contract_address) != None {
                 return Err(ContractBaseError::Custom("TheCommunityIsAlreadyAdded".to_string()));
             }
-            let contents = vec_of_parameters[2].clone();
-            let community_info = CommunityInfo {
+            let community_sub_token_address = match common_logics::convert_string_to_accountid(&vec_of_parameters[3]){
+                Some(value) => value,
+                None => return Err(ContractBaseError::ParameterInvalid),
+            };
+            let community_info = CommunityInfoWithId {
                 id: self.next_request_id,
-                name:name,
+                name:vec_of_parameters[0].clone(),
                 contract_address:Some(contract_address),
-                contents:contents,
+                contents:vec_of_parameters[2].clone(),
+                community_sub_token_contract_address:Some(community_sub_token_address),
             };
             self.request_list4adding_list.insert(&self.next_request_id, &community_info);
             self.next_request_id += 1;
@@ -190,6 +203,7 @@ mod community_list_manager {
             self.community_list_with_id.insert(&self.next_community_id, &community_info);
             self.next_community_id +=1;
             self.community_list_with_address.insert(&community_info.contract_address.unwrap(), &community_info);
+            self.request_list4adding_list.remove(&request_id);
             Ok(())
         }
 
