@@ -104,12 +104,13 @@ mod community_list_manager {
 
     impl CommunityListManager {
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
+        pub fn new(proposal_manager_address:AccountId) -> Self {
             let mut instance = Self::default();
             instance.command_list.push("set_application_core_address".to_string());
             instance.command_list.push("add_community".to_string());
             instance.command_list.push("delete_community".to_string());
             instance.command_list.push("distribution_of_rewards4communities".to_string());
+            instance.proposal_manager_address = Some(proposal_manager_address);
             instance
         }
 
@@ -145,11 +146,6 @@ mod community_list_manager {
                 }
             }
             result
-        }
-
-        #[ink(message)]
-        pub fn set_proposal_manager_address(&mut self, proposal_manager_address:AccountId) {
-            self.proposal_manager_address = Some(proposal_manager_address);
         }
 
         fn _add2request_list(&mut self, vec_of_parameters:Vec<String>) -> core::result::Result<(), ContractBaseError>{
