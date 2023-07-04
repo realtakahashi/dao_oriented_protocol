@@ -16,7 +16,7 @@ community_types = { path = "../types", default-features = false }
 
 [lib]
 path = "lib.rs"
-crate-type = ["rlib"]
+crate-type = ["cdylib","rlib"]
 
 [features]
 default = ["std"]

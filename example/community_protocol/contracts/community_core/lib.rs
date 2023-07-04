@@ -113,12 +113,14 @@ mod community_core {
     impl CommunityCore {
         #[ink(constructor)]
         pub fn new(
-            community_list_manager_address: AccountId,
+            // community_list_manager_address: AccountId,
             // community_token_address: AccountId,
             check_interval_of_blocktime: BlockNumber,
             name: String,
             contents: String,
-            community_sub_token_address: AccountId,
+            // community_sub_token_address: AccountId,
+            // proposal_manager_address: AccountId,
+            // member_manager_address: AccountId,
         ) -> Self {
             // Self {
             //     application_core_address: None,
@@ -151,15 +153,17 @@ mod community_core {
             // instance
             //     .command_list
             //     .push("rewards_by_community_token".to_string());
-            instance.community_list_manager_address = Some(community_list_manager_address);
+            // instance.community_list_manager_address = Some(community_list_manager_address);
             // instance.community_token_address = Some(community_token_address);
             instance.check_interval_of_blocktime = check_interval_of_blocktime; //7200 * 30 = 216000,
             instance.community_info = CommunityInfo {
                 name: name,
                 contents: contents,
                 constract_address: Some(instance.env().account_id()),
-                sub_token_contract_address: Some(community_sub_token_address),
+                sub_token_contract_address: None,
             };
+            // instance.proposal_manager_address = Some(proposal_manager_address);
+            // instance.member_manager_address = Some(member_manager_address);
             instance
         }
 
@@ -196,13 +200,17 @@ mod community_core {
         }
 
         #[ink(message)]
-        pub fn set_member_manager_address(&mut self, update_member_manager_address: AccountId) {
+        pub fn set_manager_addresses(
+            &mut self, 
+            update_member_manager_address: AccountId, 
+            proposal_manager_address: AccountId,
+            community_list_manager_address: AccountId,
+            community_sub_token_address: AccountId
+        ) {
             self.member_manager_address = Some(update_member_manager_address);
-        }
-
-        #[ink(message)]
-        pub fn set_proposal_manager_address(&mut self, proposal_manager_address: AccountId) {
             self.proposal_manager_address = Some(proposal_manager_address);
+            self.community_list_manager_address = Some(community_list_manager_address);
+            self.community_info.sub_token_contract_address = Some(community_sub_token_address);
         }
 
         #[ink(message)]
@@ -213,6 +221,11 @@ mod community_core {
         #[ink(message)]
         pub fn get_community_balance(&self) -> Balance {
             self.env().balance()
+        }
+
+        #[ink(message)]
+        pub fn get_community_list_manager_address(&self) -> Option<AccountId> {
+            self.community_list_manager_address
         }
 
         fn _submit_contribution(
@@ -350,24 +363,28 @@ mod community_core {
             &mut self,
             _vec_of_parameters: Vec<String>,
         ) -> core::result::Result<(), ContractBaseError> {
+            ink::env::debug_println!("########## community_core:_propose_adding_community_list call 1"); 
             if self._modifier_only_call_from_application_core(self.env().caller()) == false {
+                ink::env::debug_println!("########## community_core:_propose_adding_community_list InvalidCallingFromOrigin");    
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
             let parameter = self.community_info.name.as_str().to_owned()
-                + "$1$" + &hex::encode(self.env().caller())
+                + "$1$" + &hex::encode(self.env().account_id())
                 + "$1$" + &self.community_info.contents
                 + "$1$" + &hex::encode(self.community_info.sub_token_contract_address.unwrap());
             let mut instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(
                     self.community_list_manager_address.unwrap(),
                 );
+            ink::env::debug_println!("########## community_core:_propose_adding_community_list call 2"); 
             match instance.extarnal_execute_interface(
                 "add2request_list".to_string(),
                 parameter,
                 self.env().caller(),
             ) {
                 Ok(()) => (),
-                Err(_) => {
+                Err(e) => {
+                    ink::env::debug_println!("########## community_core:_propose_adding_community_list add2request_list_calling_error: {:?}",e);    
                     return Err(ContractBaseError::Custom(
                         "add2request_list_calling_error".to_string(),
                     ))

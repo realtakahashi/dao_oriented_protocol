@@ -3,7 +3,7 @@
 
 #[openbrush::contract]
 mod community_sub_token {
-    use contract_helper::common::common_logics;
+    use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
     use contract_helper::traits::types::types::MemberInfo;
@@ -176,6 +176,13 @@ mod community_sub_token {
             if vec_of_parameters.len() != 1 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
+            let amount = match common_logics::convert_string_to_u128(&vec_of_parameters[0]) {
+                Ok(value) => value,
+                Err(error) => return Err(error),
+            };
+            if self._get_individual_balance(caller_eoa) < amount {
+                return Err(ContractBaseError::Custom("YouDoNotHaveEnoughBalance".to_string()));
+            }
             let mut instance: DefaultContractRef =
                 ink::env::call::FromAccountId::from_account_id(self.community_token_address.unwrap());
             match instance.extarnal_execute_interface(
@@ -191,6 +198,10 @@ mod community_sub_token {
                 }
             }
             Ok(())
+        }
+
+        fn _get_individual_balance(&self, caller_eoa: AccountId) -> Balance {
+            self._balance_of(&caller_eoa)
         }
 
         fn _modifier_only_call_from_proposal(&self) -> bool {

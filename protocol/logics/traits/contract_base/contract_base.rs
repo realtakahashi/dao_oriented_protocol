@@ -17,8 +17,10 @@ pub type ContractBaseRef = dyn ContractBase;
 pub trait ContractBase {
 
     fn _execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa:AccountId) -> core::result::Result<(), ContractBaseError>{
+        ink::env::debug_println!("########## contract_base:_execute_interface call 1: {:?}",command);
         let command_list = self._get_command_list();
         if command_list.iter().filter(|item| *item == &command).collect::<Vec<&String>>().len() == 0{
+            ink::env::debug_println!("########## contract_base:_execute_interface CommnadNotFound");
             return Err(ContractBaseError::CommnadNotFound);
         }
         self._execute_interface_impl(command, parameters_csv, caller_eoa)
@@ -60,8 +62,8 @@ pub trait ContractBase {
     }
 
     fn _modifier_only_call_from_application_core(&self,caller:AccountId) -> bool {
-        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
-        ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
+        // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
+        // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
 
         match self.get_application_core_address() {
             Some(value) => value == caller,
