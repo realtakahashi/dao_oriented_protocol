@@ -58,7 +58,7 @@ mod community_list_manager {
             let mut result: Vec<Vec<u8>> = Vec::new();
             match target_function.as_str() {
                 "get_community_list" => {
-                    let list: Vec<CommunityInfoWithId> = self.get_commmunity_list();
+                    let list: Vec<CommunityInfoWithId> = self.get_community_list();
                     for value in list.iter() {
                         result.push(value.encode());
                     }
@@ -126,7 +126,7 @@ mod community_list_manager {
         }
 
         #[ink(message)]
-        pub fn get_commmunity_list(&self) -> Vec<CommunityInfoWithId> {
+        pub fn get_community_list(&self) -> Vec<CommunityInfoWithId> {
             let mut result:Vec<CommunityInfoWithId> = Vec::new();
             for i in 0..self.next_community_id {
                 match self.community_list_with_id.get(&i) {
@@ -155,7 +155,7 @@ mod community_list_manager {
                 ink::env::debug_println!("########## community_list_manager:_add2request_list InvalidCallingFromOrigin");    
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
-            if vec_of_parameters.len() != 4 {
+            if vec_of_parameters.len() != 5 {
                 ink::env::debug_println!("########## community_list_manager:_add2request_list ParameterInvalid");    
                 return Err(ContractBaseError::ParameterInvalid);
             }
@@ -183,6 +183,13 @@ mod community_list_manager {
                     return Err(ContractBaseError::ParameterInvalid);
                 }
             };
+            let applicaiton_core_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[4].clone()){
+                Some(value) => value,
+                None => {
+                    ink::env::debug_println!("########## community_list_manager:_add2request_list ParameterInvalid 4"); 
+                    return Err(ContractBaseError::ParameterInvalid);
+                }
+            };
             ink::env::debug_println!("########## community_list_manager:_add2request_list Call 2");
             let community_info = CommunityInfoWithId {
                 id: self.next_request_id,
@@ -190,6 +197,7 @@ mod community_list_manager {
                 contract_address:Some(contract_address),
                 contents:vec_of_parameters[2].clone(),
                 community_sub_token_contract_address:Some(community_sub_token_address),
+                application_core_contract_address:Some(applicaiton_core_address),
             };
             self.request_list4adding_list.insert(&self.next_request_id, &community_info);
             self.next_request_id += 1;
@@ -225,26 +233,30 @@ mod community_list_manager {
         }
 
         fn _delete_community(&mut self, vec_of_parameters:Vec<String>) -> core::result::Result<(), ContractBaseError>{
+            ink::env::debug_println!("########## community_list_manager:_delete_community Call 1");
             if self._modifier_only_call_from_proposal() == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
+            ink::env::debug_println!("########## community_list_manager:_delete_community Call 2");
             if vec_of_parameters.len() != 1 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
-            
+            ink::env::debug_println!("########## community_list_manager:_delete_community Call 3");
             let contract_address = match common_logics::convert_string_to_accountid(&vec_of_parameters[0].clone()){
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
-            if self.env().caller() != contract_address {
-                return Err(ContractBaseError::InvalidCallingFromOrigin);
-            };
+            // if self.env().caller() != contract_address {
+            //     return Err(ContractBaseError::InvalidCallingFromOrigin);
+            // };
+            ink::env::debug_println!("########## community_list_manager:_delete_community Call 4");
             let community_info = match self.community_list_with_address.get(&contract_address) {
                 Some(value) => value,
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
             self.community_list_with_id.remove(&community_info.id);
             self.community_list_with_address.remove(&contract_address);
+            ink::env::debug_println!("########## community_list_manager:_delete_community Call 5");
             Ok(())
         }
 

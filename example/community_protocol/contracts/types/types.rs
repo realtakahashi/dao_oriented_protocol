@@ -14,6 +14,7 @@ pub mod types {
         pub contract_address:Option<AccountId>,
         pub contents:String,
         pub community_sub_token_contract_address:Option<AccountId>,
+        pub application_core_contract_address:Option<AccountId>
     }
 
     #[derive( Debug, Clone, scale::Encode, scale::Decode, PartialEq)]

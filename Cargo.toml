@@ -12,4 +12,5 @@ members = [
     "example/community_protocol/contracts/community_list_manager",
     "example/community_protocol/contracts/community_token",
     "example/community_protocol/contracts/community_sub_token",
+    "example/community_protocol/contracts/update_application_core",
 ]

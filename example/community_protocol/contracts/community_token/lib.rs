@@ -120,16 +120,20 @@ mod community_token {
         }
 
         fn _rewards_psp22_4communities(&mut self, vec_of_parameters:Vec<ink::prelude::string::String>) -> core::result::Result<(), ContractBaseError>{
+            ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 1");
             let mut reward_list:Vec<RewardInfoType2> = Vec::new();
             if self._modifier_only_call_from_proposal() == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
+            ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 2");
             for param in vec_of_parameters {
+                ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 3");
                 let reward_string:Vec<ink::prelude::string::String> = param.split(&"$3$".to_string()).map(|col| col.to_string()).collect();
                 let community_sub_token_contract_address = match common_logics::convert_string_to_accountid(&reward_string[0]) {
                     Some(value) => value,
                     None => return Err(ContractBaseError::Custom("InvalidCommunityAddress".to_string())),
                 };
+                ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 4");
 
                 let reward_info = RewardInfoType2{
                     address: community_sub_token_contract_address,
@@ -137,8 +141,9 @@ mod community_token {
                 };
                 reward_list.push(reward_info);
             }
-        
+            ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 5");        
             for reward_info in reward_list {
+                ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 6");
                 let mut instance: DefaultContractRef =
                     ink::env::call::FromAccountId::from_account_id(reward_info.address);
                 match instance.extarnal_execute_interface(
@@ -153,10 +158,12 @@ mod community_token {
                         ))
                     }
                 }
+                ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 7");
                 let amount = match common_logics::convert_string_to_u128(&reward_info.amount){
                     Ok(value) => value,
                     Err(e) => return Err(e),
                 };
+                ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 8");
                 match self._burn_from(self.community_list_manager_address.unwrap(),amount) {
                     Ok(()) => {
                         self.reward_sub_token_list.insert(&reward_info.address, &self.next_reward_sub_token_id);
@@ -165,6 +172,7 @@ mod community_token {
                     Err(_e) => return Err(ContractBaseError::Custom("BurnFromIsFailure.".to_string())), 
                 }
             }
+            ink::env::debug_println!("########## community_token:_rewards_psp22_4communities Call 9");
             Ok(())
         }
 

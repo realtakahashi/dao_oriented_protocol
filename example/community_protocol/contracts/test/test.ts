@@ -18,6 +18,8 @@ import communityCoreContract from "./contract_json/community_core.json";
 import communityCoreAbi from "../../../../target/ink/community_core/community_core.json";
 import updateMemberManagerContract from "./contract_json/update_member_manager.json";
 import updateMemberManagerAbi from "../../../../target/ink/update_member_manager/update_member_manager.json";
+import updateApplicationCoreContract from "./contract_json/update_application_core.json";
+import updateApplicationCoreAbi from "../../../../target/ink/update_application_core/update_application_core.json";
 
 import { BN } from "@polkadot/util";
 import assert from "assert";
@@ -163,24 +165,26 @@ const deploy_and_create_community = async () => {
   switch(next_community_scenario){
     case 1:
       console.log("##### deploy & create community call test is started.");
-      await deployCommunity(deploy_and_create_community,10,"TestCommunity1","This community is for test.");
+      await deployProposalManager(deploy_and_create_community);
       break;
     case 2:
+      await deployCommunity(deploy_and_create_community,10,"TestCommunity1","This community is for test.");
+      break;
+    case 3:
+      await deployUpdateMemberManager(deploy_and_create_community,communityContractAddress);
+      break;
+    case 4:
+      await deployElectionManager(deploy_and_create_community);
+      break;
+    case 5:
       await deployCommunitySubToken(deploy_and_create_community,"SubToken","SBT",18, communityContractAddress, 
         communityTokenContractAddress,proposalManagerContractAddressArray[1]);
       break;
-    case 3:
-      await deployProposalManager(deploy_and_create_community);
-      break;
-    case 4:
-      await deployUpdateMemberManager(deploy_and_create_community,communityContractAddress);
-      break;
-    case 5:
-      await deployElectionManager(deploy_and_create_community);
-      break;
     case 6:
-      await deployApplicationCore(deploy_and_create_community,memberManagerContractAddressArray[contractAddressIndex],proposalManagerContractAddressArray[contractAddressIndex],electionManagerContractAddressArray[contractAddressIndex]);
-      break;
+        await deployUpdateApplicationCore(deploy_and_create_community,memberManagerContractAddressArray[contractAddressIndex],
+          proposalManagerContractAddressArray[contractAddressIndex],electionManagerContractAddressArray[contractAddressIndex],
+          communityContractAddress,communitySubTokenContractAddress,communityListManagerContractAddress);
+        break;
     case 7:
       await callConfigurePreInstallMemberManager(deploy_and_create_community, applicaitonCoreContractAddressArray[contractAddressIndex]);
       break;
@@ -191,84 +195,92 @@ const deploy_and_create_community = async () => {
       await callConfigurePreInstallElectionManager(deploy_and_create_community, applicaitonCoreContractAddressArray[contractAddressIndex]);
       break;
     case 10:
-      await doAfterDeployTest(applicaitonCoreContractAddressArray[contractAddressIndex]);
+      await callConfigurePreInstallCommunityCore(deploy_and_create_community,applicaitonCoreContractAddressArray[contractAddressIndex]);
+      break;
+    case 11:
+      await callConfigurePreInstallCommunitySubToken(deploy_and_create_community,applicaitonCoreContractAddressArray[contractAddressIndex]);
+      break;
+    case 12:
+      await checkFirstMember(applicaitonCoreContractAddressArray[contractAddressIndex]);
+      await checkUpdatePreInstallSoftware(applicaitonCoreContractAddressArray[contractAddressIndex]);    
       const parameter_string = "2$1$Add Bob$1$I propose to add Bob as a member$1$This is a test$1$https://github.com/realtakahashi/dao_oriented_protocol$1$" +
         memberManagerContractAddressArray[contractAddressIndex] +
         "$1$add_member$1$Bob$2$ZAP5o2BjWAo5uoKDE6b6Xkk4Ju7k6bDu24LNjgZbfM3iyiR";      
       await createProposal(deploy_and_create_community,proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex], parameter_string);
       break;
-    case 11:
+    case 13:
       await checkProposalList(1,"Add Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
       await createElection(deploy_and_create_community,"0",electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
       break;
-    case 12:
+    case 14:
       await voteForProposal(deploy_and_create_community, "0", "yes", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);      
       break;
-    case 13:
+    case 15:
       await endElection(deploy_and_create_community, "0", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
       break;
-    case 14:
+    case 16:
       await executeProposal(deploy_and_create_community, "0",proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
       break;
-    case 15:
-      await checkMember(2,"Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
-      const param1 = "2$1$Suggestion to install community$1$I suggest to install community which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
-      + applicaitonCoreContractAddressArray[1]
-      + "$1$install_software$1$Community$2$Community$2$description_community$2$"
-      + communityContractAddress;
-      await createProposal(deploy_and_create_community,proposalManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1], param1);
-      break;
-    case 16:
-      await checkProposalList(2,"Suggestion to install community", applicaitonCoreContractAddressArray[1]);
-      await createElection(deploy_and_create_community,"1",electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
     case 17:
-      await voteForProposal(deploy_and_create_community, "1", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 18:
-      deployer = keyring.addFromUri("//Bob");
-      await voteForProposal(deploy_and_create_community, "1", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 19:
-      deployer = keyring.addFromUri("//Alice");
-      await endElection(deploy_and_create_community, "1", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 20:
-      await installSoftware(deploy_and_create_community,"1",applicaitonCoreContractAddressArray[1]);
-      break;
-    case 21:
-      await checkSoftwareList(1, "Community", communityContractAddress,applicaitonCoreContractAddressArray[1]);
-      const param2 = "2$1$Suggestion to install community_sub_token$1$I suggest to install community_sub_token which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
-      + applicaitonCoreContractAddressArray[1]
-      + "$1$install_software$1$CommunitySubToken$2$CommunitySubToken$2$description_community_sub_token$2$"
-      + communitySubTokenContractAddress;
-      await createProposal(deploy_and_create_community,proposalManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1], param2);
-      break;
-    case 22:
-      await checkProposalList(3,"Suggestion to install community_sub_token", applicaitonCoreContractAddressArray[1]);
-      await createElection(deploy_and_create_community,"2",electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 23:
-      await voteForProposal(deploy_and_create_community, "2", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 24:
-      deployer = keyring.addFromUri("//Bob");
-      await voteForProposal(deploy_and_create_community, "2", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 25:
-      deployer = keyring.addFromUri("//Alice");
-      await endElection(deploy_and_create_community, "2", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
-      break;
-    case 26:
-      await installSoftware(deploy_and_create_community,"2",applicaitonCoreContractAddressArray[1]);
-      break;
-    case 27:
-      await checkSoftwareList(2, "CommunitySubToken", communitySubTokenContractAddress,applicaitonCoreContractAddressArray[1]);
-      await configureCommunityCore(deploy_and_create_community,memberManagerContractAddressArray[1],proposalManagerContractAddressArray[1],
-        communityListManagerContractAddress,communitySubTokenContractAddress,communityContractAddress);
-      break;
-    case 28:
+      await checkMember(2,"Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
+    //   const param1 = "2$1$Suggestion to install community$1$I suggest to install community which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+    //   + applicaitonCoreContractAddressArray[1]
+    //   + "$1$install_software$1$Community$2$Community$2$description_community$2$"
+    //   + communityContractAddress;
+    //   await createProposal(deploy_and_create_community,proposalManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1], param1);
+    //   break;
+    // case 16:
+    //   await checkProposalList(2,"Suggestion to install community", applicaitonCoreContractAddressArray[1]);
+    //   await createElection(deploy_and_create_community,"1",electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 17:
+    //   await voteForProposal(deploy_and_create_community, "1", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 18:
+    //   deployer = keyring.addFromUri("//Bob");
+    //   await voteForProposal(deploy_and_create_community, "1", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 19:
+    //   deployer = keyring.addFromUri("//Alice");
+    //   await endElection(deploy_and_create_community, "1", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 20:
+    //   await installSoftware(deploy_and_create_community,"1",applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 21:
+    //   await checkSoftwareList(1, "Community", communityContractAddress,applicaitonCoreContractAddressArray[1]);
+    //   const param2 = "2$1$Suggestion to install community_sub_token$1$I suggest to install community_sub_token which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+    //   + applicaitonCoreContractAddressArray[1]
+    //   + "$1$install_software$1$CommunitySubToken$2$CommunitySubToken$2$description_community_sub_token$2$"
+    //   + communitySubTokenContractAddress;
+    //   await createProposal(deploy_and_create_community,proposalManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1], param2);
+    //   break;
+    // case 22:
+    //   await checkProposalList(3,"Suggestion to install community_sub_token", applicaitonCoreContractAddressArray[1]);
+    //   await createElection(deploy_and_create_community,"2",electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 23:
+    //   await voteForProposal(deploy_and_create_community, "2", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 24:
+    //   deployer = keyring.addFromUri("//Bob");
+    //   await voteForProposal(deploy_and_create_community, "2", "yes", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 25:
+    //   deployer = keyring.addFromUri("//Alice");
+    //   await endElection(deploy_and_create_community, "2", electionManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 26:
+    //   await installSoftware(deploy_and_create_community,"2",applicaitonCoreContractAddressArray[1]);
+    //   break;
+    // case 27:
+    //   await checkSoftwareList(2, "CommunitySubToken", communitySubTokenContractAddress,applicaitonCoreContractAddressArray[1]);
+    //   await configureCommunityCore(deploy_and_create_community,memberManagerContractAddressArray[1],proposalManagerContractAddressArray[1],
+    //     communityListManagerContractAddress,communitySubTokenContractAddress,communityContractAddress);
+    //   break;
+    // case 28:
         await communityBusinessLogicTest();
+        break;
     default:
       // api.disconnect();
       // console.log("####### Test End.");
@@ -312,14 +324,14 @@ const communityBusinessLogicTest = async () => {
       break;
     case 8:
       await checkCommunityList(1,communityContractAddress,communityListManagerContractAddress);
-      const param3 = "2$1$Suggestion to reward community token$1$I suggest to reward$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+      const param3 = "2$1$Suggestion to reward community native token$1$I suggest to reward$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
         + communityListManagerContractAddress
         + "$1$distribution_of_rewards4communities$1$"
         + communityContractAddress + "$3$2222";
       await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param3);  
       break;
     case 9:
-      await checkProposalList(5,"Suggestion to reward community token", applicaitonCoreContractAddressArray[0]);
+      await checkProposalList(5,"Suggestion to reward community native token", applicaitonCoreContractAddressArray[0]);
       await createElection(communityBusinessLogicTest,"4",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 10:
@@ -338,26 +350,195 @@ const communityBusinessLogicTest = async () => {
       break;
     case 14:
       await checkCommunityCoreBalance(2222,communityContractAddress);
+      const param4 = "2$1$Suggestion to reward community token$1$I suggest to reward$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+        + communityTokenContractAddress
+        + "$1$rewards_psp22_4communities$1$"
+        + communitySubTokenContractAddress + "$3$999";
+      await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param4);  
+      break;
     case 15:
-      //community_token_rewards_psp22_4communities
+      await checkProposalList(6,"Suggestion to reward community token", applicaitonCoreContractAddressArray[0]);
+      await createElection(communityBusinessLogicTest,"5",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 16:
-      // community_sub_token__rewards_psp22_individials
+      await voteForProposal(communityBusinessLogicTest, "5", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 17:
-      // community_sub_token__exchange_2_community_token
+      deployer = keyring.addFromUri("//Bob");
+      await voteForProposal(communityBusinessLogicTest, "5", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 18:
-      // community_core_submit_contribution
+      deployer = keyring.addFromUri("//Alice");
+      await endElection(communityBusinessLogicTest, "5", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      break;
+    case 19:
+      await executeProposal(communityBusinessLogicTest, "5",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      break;
+    case 20:
+      await 
+      // community_sub_token__rewards_psp22_individials
+      await checkSubCommunityTokenBalance(999, communityContractAddress, communitySubTokenContractAddress);
+      const param5 = "2$1$Suggestion to reward individial$1$I suggest to reward to individial$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+        + communitySubTokenContractAddress
+        + "$1$rewards_psp22_individials$1$"
+        + "ajYMsCKsEAhEvHpeA4XqsfiA9v1CdzZPrCfS6pEfeGHW9j8$3$333";
+      await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[1],applicaitonCoreContractAddressArray[1], param5);  
+      break;
+    case 21:
+      await checkProposalList(2,"Suggestion to reward individial", applicaitonCoreContractAddressArray[1]);
+      await createElection(communityBusinessLogicTest,"1",electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);
+      break;
+    case 22:
+      await voteForProposal(communityBusinessLogicTest, "1", "yes", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);      
+      break;
+    case 23:
+      deployer = keyring.addFromUri("//Bob");
+      await voteForProposal(communityBusinessLogicTest, "1", "yes", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);      
+      break;
+    case 24:
+      deployer = keyring.addFromUri("//Alice");
+      await endElection(communityBusinessLogicTest, "1", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);
+      break;
+    case 25:
+      await executeProposal(communityBusinessLogicTest, "1",proposalManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);
+      break;
+    case 26:
+      await checkSubCommunityTokenBalance(333, "ajYMsCKsEAhEvHpeA4XqsfiA9v1CdzZPrCfS6pEfeGHW9j8", communitySubTokenContractAddress);
+      const param6 = "333";
+      await callApplicationCoreInfterface(communityBusinessLogicTest, communitySubTokenContractAddress,"exchange_2_community_token",param6,applicaitonCoreContractAddressArray[1]);
+      break;
+    case 27:
+      await checkCommunityTokenBalance(333, "ajYMsCKsEAhEvHpeA4XqsfiA9v1CdzZPrCfS6pEfeGHW9j8", communityTokenContractAddress);
+      const param7 = "Test Contribution";
+      await callApplicationCoreInfterface(communityBusinessLogicTest, communityContractAddress,"submit_contribution",param7,applicaitonCoreContractAddressArray[1]);
+      break;
+    // case 28:
+    //   await checkContributionList(1, "ajYMsCKsEAhEvHpeA4XqsfiA9v1CdzZPrCfS6pEfeGHW9j8", "Test Contribution", communityContractAddress);
+    //   const param8 = "2$1$Suggestion to delete community$1$I suggest to delete community$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+    //     + communityListManagerContractAddress
+    //     + "$1$delete_community$1$"
+    //     + communityContractAddress;
+    //   await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param8);  
+    //   break;
+    // case 29:
+    //   await checkProposalList(7,"Suggestion to delete community", applicaitonCoreContractAddressArray[0]);
+    //   await createElection(communityBusinessLogicTest,"6",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+    //   break;
+    // case 30:
+    //   await voteForProposal(communityBusinessLogicTest, "6", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+    //   break;
+    // case 31:
+    //   deployer = keyring.addFromUri("//Bob");
+    //   await voteForProposal(communityBusinessLogicTest, "6", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+    //   break;
+    // case 32:
+    //   deployer = keyring.addFromUri("//Alice");
+    //   await endElection(communityBusinessLogicTest, "6", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+    //   break;
+    // case 33:
+    //   await executeProposal(communityBusinessLogicTest, "6",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+    //   break;
+    // case 34:
+    //   await checkCommunityList(0,"",communityListManagerContractAddress);
+    //   api.disconnect();
+    //   break;
     default:
       api.disconnect();
-      break;
+      console.log("############# All Test Is Finished!! ################")
+    break;
   }
   next_community_business_logic_scenario++;
   console.log("# next_community_business_logic_scenario is:",next_community_business_logic_scenario);
 }
 
 /// query functions
+const checkContributionList = async (targetCount:number, targetContributerAddress:string, targetContents:string, communityCoreAddress:string) => {
+  console.log("checkContributionList Start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    communityCoreAbi,
+    communityCoreAddress
+  );
+  const { gasConsumed, result, output } = await contract.query.getContributionList(
+    deployer.address,
+    {
+      value: 0,
+      gasLimit: gasLimit,
+      storageDepositLimit,
+    },
+  );
+  if (output !== undefined && output !== null) {
+    //@ts-ignore
+    let response_json = output.toJSON().ok;
+    let json_data = JSON.parse(JSON.stringify(response_json));
+    // console.log("json_data: ",json_data);
+    assert.equal(json_data.length,targetCount);
+    assert.equal(json_data[targetCount-1].contributor,targetContributerAddress);
+    assert.equal(json_data[targetCount-1].contents,targetContents);
+    console.log("checkContributionList End");
+  }
+}
+
+const checkCommunityTokenBalance = async (targetBalance:number, targetAddress:string, communityTokenAddress:string) => {
+  console.log("checkCommunityTokenBalance Start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    communityTokenAbi,
+    communityTokenAddress,
+  );
+  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+    deployer.address,
+    {
+      value: 0,
+      gasLimit: gasLimit,
+      storageDepositLimit,
+    },
+    targetAddress
+  );
+  if (output !== undefined && output !== null) {
+    //@ts-ignore
+    let response = output.toHuman().Ok;
+    console.log("response: ",response);
+    let numResult:number = Number(response.replace(/,/g,''));
+    console.log("numResult: ",numResult);
+    assert.equal(numResult,targetBalance);
+    console.log("checkCommunityTokenBalance End");
+  }
+}
+
+const checkSubCommunityTokenBalance = async (targetBalance:number, targetAddress:string, communitySubTokenAddress:string) => {
+  console.log("checkSubCommunityTokenBalance Start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    communitySubTokenAbi,
+    communitySubTokenAddress,
+  );
+  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+    deployer.address,
+    {
+      value: 0,
+      gasLimit: gasLimit,
+      storageDepositLimit,
+    },
+    targetAddress
+  );
+  if (output !== undefined && output !== null) {
+    //@ts-ignore
+    let response = output.toHuman().Ok;
+    console.log("response: ",response);
+    let numResult:number = Number(response.replace(/,/g,''));
+    console.log("numResult: ",numResult);
+    assert.equal(numResult,targetBalance);
+    console.log("checkSubCommunityTokenBalance End");
+  }
+}
+
 const checkCommunityCoreBalance = async (targetBalance:number, communityCoreAddress:string) => {
   console.log("checkCommunityCoreBalance Start");
   const gasLimit: any = getGasLimitForNotDeploy(api);
@@ -395,7 +576,7 @@ const checkCommunityList = async (targetCount:number, targetContractAddress:stri
     communityListManagerAbi,
     communityListManagerAddress
   );
-  const { gasConsumed, result, output } = await contract.query.getCommmunityList(
+  const { gasConsumed, result, output } = await contract.query.getCommunityList(
     deployer.address,
     {
       value: 0,
@@ -409,7 +590,9 @@ const checkCommunityList = async (targetCount:number, targetContractAddress:stri
     let json_data = JSON.parse(JSON.stringify(response_json));
     // console.log("json_data: ",json_data);
     assert.equal(json_data.length,targetCount);
-    assert.equal(json_data[targetCount-1].contractAddress,targetContractAddress);
+    if (json_data.length > 0){
+      assert.equal(json_data[targetCount-1].contractAddress,targetContractAddress);
+    }
     console.log("checkCommunityList End");
   }
 }
@@ -584,6 +767,36 @@ const checkPreInstallSoftware =async (applicaitonCoreAddress:string) => {
     assert.equal(json_data[0].name,"Member Manager");
     assert.equal(json_data[1].name,"Proposal Manager");
     assert.equal(json_data[2].name,"Election Manager");
+  }
+}
+
+const checkUpdatePreInstallSoftware =async (applicaitonCoreAddress:string) => {
+  console.log("checkUpdatePreInstallSoftware Start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    updateApplicationCoreAbi,
+    applicaitonCoreAddress
+  );
+  const { gasConsumed, result, output } = await contract.query.getPreInstalledSoftware(
+    deployer.address,
+    {
+      value: 0,
+      gasLimit: gasLimit,
+      storageDepositLimit,
+    },
+  );
+  if (output !== undefined && output !== null) {
+    //@ts-ignore
+    let response_json = output.toJSON().ok;
+    console.log("response_json:",response_json);
+    let json_data = JSON.parse(JSON.stringify(response_json));
+    assert.equal(json_data.length,5,"pre_software count is not 5.");
+    assert.equal(json_data[0].name,"Member Manager");
+    assert.equal(json_data[1].name,"Proposal Manager");
+    assert.equal(json_data[2].name,"Election Manager");
+    console.log("checkUpdatePreInstallSoftware Start");
   }
 }
 
@@ -947,22 +1160,22 @@ const configureCommunityCore = async (
   });
 }
 
-const callConfigurePreInstallElectionManager = async (callBack: () => void,
+const callConfigurePreInstallCommunityCore = async (callBack: () => void,
     applicaitonCoreAddress:string    
 ) => {
-  console.log("callConfigurePreInstallElectionManager start");
+  console.log("callConfigurePreInstallCommunityCore start");
   const gasLimit: any = getGasLimitForNotDeploy(api);
 
   const contract = new ContractPromise(
     api,
-    applicationCoreAbi,
+    updateApplicationCoreAbi,
     applicaitonCoreAddress
   );
-  const { gasRequired } = await contract.query.configurePreInstallElection(
+  const { gasRequired } = await contract.query.configurePreInstallCommunityCore(
     deployer.address,
     { value: 0, gasLimit: gasLimit }
   );
-  const tx = await contract.tx.configurePreInstallElection({
+  const tx = await contract.tx.configurePreInstallCommunityCore({
     value: 0,
     gasLimit: gasRequired,
   });
@@ -974,7 +1187,40 @@ const callConfigurePreInstallElectionManager = async (callBack: () => void,
         console.log("Transaction is failure.");
       }
       unsub();
-      console.log("callConfigurePreInstallElectionManager end");
+      console.log("callConfigurePreInstallCommunityCore end");
+      callBack();
+    }
+  });
+};
+
+const callConfigurePreInstallCommunitySubToken = async (callBack: () => void,
+    applicaitonCoreAddress:string    
+) => {
+  console.log("callConfigurePreInstallCommunitySubToken start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    updateApplicationCoreAbi,
+    applicaitonCoreAddress
+  );
+  const { gasRequired } = await contract.query.configurePreInstallCommunitySubToken(
+    deployer.address,
+    { value: 0, gasLimit: gasLimit }
+  );
+  const tx = await contract.tx.configurePreInstallCommunitySubToken({
+    value: 0,
+    gasLimit: gasRequired,
+  });
+
+  //@ts-ignore
+  const unsub = await tx.signAndSend(deployer, ({ events = [], status }) => {
+    if (status.isFinalized) {
+      if (checkEventsAndInculueError(events) == true) {
+        console.log("Transaction is failure.");
+      }
+      unsub();
+      console.log("callConfigurePreInstallCommunitySubToken end");
       callBack();
     }
   });
@@ -1008,6 +1254,39 @@ const callConfigurePreInstallProposalManager = async (callBack: () => void,
       }
       unsub();
       console.log("callConfigurePreInstallProposalManager end");
+      callBack();
+    }
+  });
+};
+
+const callConfigurePreInstallElectionManager = async (callBack: () => void,
+    applicaitonCoreAddress:string
+) => {
+  console.log("callConfigurePreInstallElectionManager start");
+  const gasLimit: any = getGasLimitForNotDeploy(api);
+
+  const contract = new ContractPromise(
+    api,
+    applicationCoreAbi,
+    applicaitonCoreAddress
+  );
+  const { gasRequired } = await contract.query.configurePreInstallElection(
+    deployer.address,
+    { value: 0, gasLimit: gasLimit }
+  );
+  const tx = await contract.tx.configurePreInstallElection({
+    value: 0,
+    gasLimit: gasRequired,
+  });
+
+  //@ts-ignore
+  const unsub = await tx.signAndSend(deployer, ({ events = [], status }) => {
+    if (status.isFinalized) {
+      if (checkEventsAndInculueError(events) == true) {
+        console.log("Transaction is failure.");
+      }
+      unsub();
+      console.log("callConfigurePreInstallElectionManager end");
       callBack();
     }
   });
@@ -1342,6 +1621,50 @@ const deployApplicationCore = async (
       }
     }
   );
+};
+
+const deployUpdateApplicationCore = async (
+  callBack: () => void, 
+  memberManagerAddress:string,
+  proposalManagerAddress:string,
+  electionManagerAddress:string,
+  communityCoreAddress:string,
+  communitySubTokenAddress:string,
+  communityListManagerAddress:string,
+) => {
+console.log("Start deployUpdateApplicationCore");
+
+const contractWasm = updateApplicationCoreContract.source.wasm;
+const contract = new CodePromise(api, updateApplicationCoreAbi, contractWasm);
+const gasLimit: any = api.registry.createType("WeightV2", {
+  refTime: 3219235328,
+  proofSize: 131072,
+});
+
+const tx = contract.tx.new(
+  { gasLimit, storageDepositLimit },
+  memberManagerAddress,
+  proposalManagerAddress,
+  electionManagerAddress,
+  communityCoreAddress,
+  communitySubTokenAddress,
+  communityListManagerAddress
+);
+
+//@ts-ignore
+const unsub = await tx.signAndSend(deployer,({ events = [], status, contract }) => {
+    if (status.isFinalized) {
+      if (checkEventsAndInculueError(events)) {
+        console.log("Transaction is failure.");
+      } else {
+          applicaitonCoreContractAddressArray.push(contract.address.toString());
+      }
+      unsub();
+      console.log("End deployUpdateApplicationCore address: ",applicaitonCoreContractAddressArray[applicaitonCoreContractAddressArray.length-1]);
+      callBack();
+    }
+  }
+);
 };
 
 const checkEventsAndInculueError = (events: any[]): boolean => {

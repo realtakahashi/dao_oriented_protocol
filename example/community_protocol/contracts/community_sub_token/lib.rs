@@ -122,47 +122,58 @@ mod community_sub_token {
         }
 
         fn _rewards_psp22_individials(&mut self, vec_of_parameters:Vec<ink::prelude::string::String>) -> core::result::Result<(), ContractBaseError>{
+            ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 1");
             let mut reward_list:Vec<RewardInfo> = Vec::new();
             if self._modifier_only_call_from_proposal() == false{
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
+            ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 2");
             for param in vec_of_parameters {
+                ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 3");
                 let reward_string:Vec<ink::prelude::string::String> = param.split(&"$3$".to_string()).map(|col| col.to_string()).collect();
                 let address = match common_logics::convert_string_to_accountid(&reward_string[0]) {
                     Some(value) => value,
                     None => return Err(ContractBaseError::Custom("InvalidEoaAddress".to_string())),
                 };
+                ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 4");
                 let amount = match common_logics::convert_string_to_u128(&reward_string[1]) {
                     Ok(value) => value,
                     Err(error) => return Err(error),
                 };
+                ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 5");
                 let reward_info = RewardInfo{
                     address: address,
                     amount: amount 
                 };
                 reward_list.push(reward_info);
             }
-        
+            ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 6");
             for reward_info in reward_list {
+                ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 7");
                 match self._transfer_from_to(self.community_core_address.unwrap(),reward_info.address,reward_info.amount, "transfer_data".as_bytes().to_vec()) {
                     Ok(()) => (),
                     Err(e) => return Err(ContractBaseError::Custom("TransferFromToIsFailure.".to_string())),
                 }
             }
+            ink::env::debug_println!("########## community_sub_token:_rewards_psp22_individials Call 8");
             Ok(())
         }
 
         fn _mint_by_community_token(&mut self, vec_of_parameters:Vec<ink::prelude::string::String>) -> core::result::Result<(), ContractBaseError>{
+            ink::env::debug_println!("########## community_sub_token:_mint_by_community_token Call 1");
             if self._modifier_only_call_from_community_token() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
+            ink::env::debug_println!("########## community_sub_token:_mint_by_community_token Call 2");
             if vec_of_parameters.len() != 1 {
                 return Err(ContractBaseError::ParameterInvalid);
             }
+            ink::env::debug_println!("########## community_sub_token:_mint_by_community_token Call 3");
             let amount = match common_logics::convert_string_to_u128(&vec_of_parameters[0]) {
                 Ok(value) => value,
                 Err(error) => return Err(error),
             };
+            ink::env::debug_println!("########## community_sub_token:_mint_by_community_token Call 4");
             match self._mint_to(self.community_core_address.unwrap(), amount){
                 Ok(()) => Ok(()),
                 Err(e) => Err(ContractBaseError::Custom("MintToIsFailure.".to_string())),

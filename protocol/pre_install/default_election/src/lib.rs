@@ -137,7 +137,7 @@ mod default_election {
                 minimum_voter_turnout_percentage: 50,
                 passing_percentage: 50,
                 application_core_address: None,
-                remain_term_electoral_commissioner: 5,
+                remain_term_electoral_commissioner: 20,
                 next_election_id: 0,
                 command_list: [
                     "create_election".to_string(),
