@@ -5,6 +5,7 @@ import { AppContext } from "../../_app";
 import { get_selected_address } from "../../../api/accountInfoUtils";
 import ProposalList from "../../../components/ProposalList";
 import SubmitProposal from "../../../components/SubmitProposal";
+import router from "next/router";
 
 const Proposal = () => {
     const [showListButton, setShowListButton] = useState(false);
@@ -12,10 +13,10 @@ const Proposal = () => {
     const [showList, setShowList] = useState(true);
     const [showSubmitScreen, setShowSubmitScreen] = useState(false);
     const [showAllList, setShowAllList] = useState(true);
-    const [applicationCoreContractAddress, setapplicationCoreContractAddress] = useState("");
+    const [applicationCoreContractAddress, setapplicationCoreContractAddress] = useState('');
 
-    const setUrl = () => {
-      let address = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+    const setUrl = async () => {
+      const address = String(router.query.address);
       setapplicationCoreContractAddress(address);  
     }
 

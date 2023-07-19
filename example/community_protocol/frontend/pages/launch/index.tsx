@@ -120,7 +120,7 @@ const SelectAccount = () => {
 
         {showStartLink == true && (
           <>
-            <div className='py-5 text-30px text-center text-white'>Input Your "Application Core Contract" Address</div>
+            <div className='py-5 text-30px text-center text-white'>Input Your Application Core Contract Address</div>
             <div className='text-center'>
               <input
                 className='appearance-none rounded w-2/3 py-2 px-4 text-gray-700 
