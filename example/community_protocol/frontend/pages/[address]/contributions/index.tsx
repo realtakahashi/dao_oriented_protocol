@@ -7,6 +7,7 @@ import { checkContribution } from '../../../api/community';
 import { AppContext } from '../../_app';
 import { get_account_info, get_selected_address } from '../../../api/accountInfoUtils';
 import SubmitContribution from '../../../components/SubmitContribution';
+import router from 'next/router';
 
 const Contributions = () => {
   const [showListButton, setShowListButton] = useState(false);
@@ -18,7 +19,7 @@ const Contributions = () => {
   const { api } = useContext(AppContext);
 
   const setUrl = () => {
-    let address = sessionStorage.getItem('ApplicaitonCoreContractAddress') ?? '';
+    const address = String(router.query.address);
     setapplicationCoreContractAddress(address);
   };
 

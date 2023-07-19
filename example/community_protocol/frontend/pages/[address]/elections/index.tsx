@@ -6,6 +6,7 @@ import { ElectionInfo } from "../../../types/ElectionTypes";
 import { get_selected_address } from "../../../api/accountInfoUtils";
 import { getElectionCommisionList, getMemberList } from "../../../api/member";
 import { getElectionList } from "../../../api/election";
+import router from "next/router";
 
 const ElectionList = () => {
   const [electionList, setElectionList] = useState<Array<ElectionInfo>>();
@@ -18,7 +19,7 @@ const ElectionList = () => {
     console.log("## electionList:", electionList);
     setElectionList(electionList);
   
-    let address = sessionStorage.getItem('ApplicaitonCoreContractAddress') ?? '';
+    const address = String(router.query.address);
     setapplicationCoreContractAddress(address);
   };
 

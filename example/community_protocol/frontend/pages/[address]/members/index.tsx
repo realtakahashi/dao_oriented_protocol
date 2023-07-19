@@ -5,6 +5,7 @@ import { AppContext } from '../../_app';
 import { MemberInfoPlus } from '../../../types/MemberTypes';
 import { get_selected_address } from '../../../api/accountInfoUtils';
 import { getElectionCommisionList, getMemberList } from '../../../api/member';
+import router from 'next/router';
 
 const MemberList = () => {
   const [memberList, setMemberList] = useState<Array<MemberInfoPlus>>();
@@ -36,7 +37,7 @@ const MemberList = () => {
     }
     setMemberList(result);
 
-    let address = sessionStorage.getItem('ApplicaitonCoreContractAddress') ?? '';
+    const address = String(router.query.address);
     setapplicationCoreContractAddress(address);
   };
 

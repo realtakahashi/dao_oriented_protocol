@@ -20,9 +20,6 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 //   String(process.env.NEXT_PUBLIC_DEFAULT_ELECTION_CONTRACT_ADDRESS) ?? "";
 // const defaultProposalAddress =
 //   String(process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_CONTRACT_ADDRESS) ?? "";
-const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
-const defaultElectionAddress = sessionStorage.getItem("ElectionContractAddress")??"";
-const defaultProposalAddress = sessionStorage.getItem("ProposalManagerContractAddress")??"";
 
 const storageDepositLimit = null;
 
@@ -30,6 +27,8 @@ export const getProposalList = async (
   api: any,
   peformanceAddress: string
 ): Promise<Array<ProposalInfo>> => {
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  
   let response: ProposalInfo[] = [];
   const contract = new ContractPromise(
     api,
@@ -47,6 +46,7 @@ export const getProposalList = async (
   );
   if (output !== undefined && output !== null) {
     console.log("getProposalList:output:",output?.toJSON());
+    //@ts-ignore
     let response_json = output?.toJSON().ok;
     let json_data = JSON.parse(JSON.stringify(response_json));
     for (let i = 0; i < json_data.length; i++) {
@@ -90,6 +90,8 @@ export const checkElectionCommisioner = async (
   api:any,
   peformanceAddress: string
 ): Promise<boolean> => {
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  
   let res = false;
   const contract = new ContractPromise(api, ApplicationCoreAbi, applicationCoreAddress);
   const gasLimit: any = getGasLimitForNotDeploy(api);
@@ -100,6 +102,7 @@ export const checkElectionCommisioner = async (
   });
   if (output !== undefined && output !== null) {
     console.log("checkElectionCommisioner: output: ", output.toHuman());
+    // @ts-ignore
     res = Boolean(output.toHuman().Ok) ?? false;
   }
   return res;
@@ -112,7 +115,9 @@ export const voteForProposal = async (
   proposalId: number
 ) => {
   const { web3FromSource } = await import("@polkadot/extension-dapp");
-
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  const defaultElectionAddress = sessionStorage.getItem("ElectionContractAddress")??"";
+  
   const contract = new ContractPromise(
     api,
     ApplicationCoreAbi,
@@ -129,10 +134,14 @@ export const voteForProposal = async (
     String(proposalId) + "$1$" + yesOrNo
   );
 
+  //@ts-ignore
   if (output?.toHuman()?.Ok.Err != undefined) {
+    //@ts-ignore
     if (output?.toHuman()?.Ok.Err.Custom != undefined) {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.Custom);
     } else {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.toHuman());
     }
     return;
@@ -181,7 +190,9 @@ export const createElection = async (
   proposalId: number
 ) => {
   const { web3FromSource } = await import("@polkadot/extension-dapp");
-
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  const defaultElectionAddress = sessionStorage.getItem("ElectionContractAddress")??"";
+  
   const contract = new ContractPromise(
     api,
     ApplicationCoreAbi,
@@ -198,10 +209,14 @@ export const createElection = async (
     String(proposalId)
   );
 
+  //@ts-ignore
   if (output?.toHuman()?.Ok.Err != undefined) {
+    //@ts-ignore
     if (output?.toHuman()?.Ok.Err.Custom != undefined) {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.Custom);
     } else {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.toHuman());
     }
     return;
@@ -235,7 +250,9 @@ export const endElection = async (
   proposalId: number
 ) => {
   const { web3FromSource } = await import("@polkadot/extension-dapp");
-
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  const defaultElectionAddress = sessionStorage.getItem("ElectionContractAddress")??"";
+  
   const contract = new ContractPromise(
     api,
     ApplicationCoreAbi,
@@ -252,10 +269,14 @@ export const endElection = async (
     String(proposalId)
   );
 
+  //@ts-ignore
   if (output?.toHuman()?.Ok.Err != undefined) {
+    //@ts-ignore
     if (output?.toHuman()?.Ok.Err.Custom != undefined) {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.Custom);
     } else {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.toHuman());
     }
     return;
@@ -289,7 +310,9 @@ export const executeProposal = async (
   proposalId: number
 ) => {
   const { web3FromSource } = await import("@polkadot/extension-dapp");
-
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  const defaultProposalAddress = sessionStorage.getItem("ProposalManagerContractAddress")??"";
+  
   const contract = new ContractPromise(
     api,
     ApplicationCoreAbi,
@@ -306,10 +329,14 @@ export const executeProposal = async (
     String(proposalId)
   );
 
+  //@ts-ignore
   if (output?.toHuman()?.Ok.Err != undefined) {
+    //@ts-ignore
     if (output?.toHuman()?.Ok.Err.Custom != undefined) {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.Custom);
     } else {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.toHuman());
     }
     return;
@@ -345,7 +372,9 @@ export const submitProposal = async (
   proposalInfo: ProposalInfo
 ) => {
   const { web3FromSource } = await import("@polkadot/extension-dapp");
-
+  const applicationCoreAddress = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+  const defaultProposalAddress = sessionStorage.getItem("ProposalManagerContractAddress")??"";
+  
   const contract = new ContractPromise(
     api,
     ApplicationCoreAbi,
@@ -381,10 +410,14 @@ export const submitProposal = async (
     params
   );
 
+  //@ts-ignore
   if (output?.toHuman()?.Ok.Err != undefined) {
+    //@ts-ignore
     if (output?.toHuman()?.Ok.Err.Custom != undefined) {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.Custom);
     } else {
+      //@ts-ignore
       alert("Error is occured: " + output?.toHuman()?.Ok.Err.toHuman());
     }
     return;

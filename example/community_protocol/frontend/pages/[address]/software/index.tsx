@@ -6,6 +6,7 @@ import { get_selected_address } from "../../../api/accountInfoUtils";
 import { getElectionCommisionList, getMemberList } from "../../../api/member";
 import { SoftwareInfo } from "../../../types/SoftwareTypes";
 import { getPreSoftwareList, getSoftwareList } from "../../../api/software";
+import router from "next/router";
 
 const SoftwareList = () => {
   const [softwareList, setSoftwareList] = useState<Array<SoftwareInfo>>();
@@ -22,7 +23,7 @@ const SoftwareList = () => {
     let result: SoftwareInfo[] = normalList.concat(preList);
     setSoftwareList(result);
 
-    let address = sessionStorage.getItem("ApplicaitonCoreContractAddress")??"";
+    const address = String(router.query.address);
     setapplicationCoreContractAddress(address);
   };
 
