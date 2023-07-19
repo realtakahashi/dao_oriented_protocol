@@ -24,14 +24,15 @@ const CommunitySearchResult = (communitySearchProps: CommunitySearchProps) => {
 
   return (
     <>
-      <div className='p-2 grid grid-col-2 mx-1 lg:-mx-4'>
+      <div className='p-2 flex flex-col mx-1 lg:-mx-4'>
+      {/* <div className='p-2 grid grid-col-2 mx-1 lg:-mx-4'> */}
         {typeof communityList !== 'undefined'
           ? communityList.map((community) => {
               return (
                 <>
-                  <div className='w-1/6 col-span-1'></div>
+                  {/* <div className='w-1/6 col-span-1'></div> */}
                   <div key={community.id}>
-                    <div className='col-span-2 text-left p-20 break-words whitespace-pre-wrap w-5/6 rounded overflow-hidden shadow-lg bg-black '>
+                    <div className='col-span-2 text-left px-20 break-words whitespace-pre-wrap w-5/6 rounded overflow-hidden shadow-lg bg-black '>
                       <CommunityParts targetCommunity={community}></CommunityParts>
                     </div>
                   </div>

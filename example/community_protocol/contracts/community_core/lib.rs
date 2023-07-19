@@ -223,7 +223,7 @@ mod community_core {
             self.community_list_manager_address
         }
 
-        // todo: パラメータに合わせて修正
+        
         fn _set_manager_addresses(
             &mut self,
             vec_of_parameters: Vec<String>

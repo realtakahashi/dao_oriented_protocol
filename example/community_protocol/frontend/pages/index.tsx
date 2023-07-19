@@ -75,7 +75,7 @@ const SelectAccount = () => {
         <div className="m-10"></div>
         <div className="flex justify-center p-3">
           <button
-            className="px-4 py-2 border-double border-white border-2 bg-black rounded text-30px text-white  hover:bg-blue-500"
+            className="px-4 py-2 border-double border-white border-2 bg-black rounded text-30px text-white  hover:border-blue-500"
             onClick={_onConnectWallet}
           >
             Connect Wallet
@@ -104,7 +104,7 @@ const SelectAccount = () => {
 
         <div className="flex justify-center p-3">
           <button
-            className="px-4 py-2 border-double border-white border-2 bg-black rounded text-20px text-white  hover:bg-blue-500"
+            className="px-4 py-2 border-double border-white border-2 bg-black rounded text-20px text-white  hover:border-blue-500"
             onClick={_onSubmit}
           >
             Ok

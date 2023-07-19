@@ -43,132 +43,140 @@ let contractAddressIndex:number = 0;
 let next_community_list_manager_scenario:number = 1;
 let next_community_scenario:number = 1;
 let next_community_business_logic_scenario:number = 1;
+let communityListBaseProposalCount = 6;
 
 /// controller function
-const community_list_manager_test = async () => {
-  switch (next_community_list_manager_scenario){
-    case 1:
-      console.log("####### community_list_manager_test start.");
-      await deployProposalManager(community_list_manager_test);
-      break;
-    case 2:
-      await deployMemberManager(community_list_manager_test);
-      break;
-    case 3:
-      await deployElectionManager(community_list_manager_test);
-      break;
-    case 4:
-      await deployApplicationCore(community_list_manager_test,memberManagerContractAddressArray[contractAddressIndex],proposalManagerContractAddressArray[contractAddressIndex],electionManagerContractAddressArray[contractAddressIndex]);
-      break;
-    case 5:
-      await callConfigurePreInstallMemberManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 6:
-      await callConfigurePreInstallProposalManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 7:
-      await callConfigurePreInstallElectionManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 8:
-      await doAfterDeployTest(applicaitonCoreContractAddressArray[contractAddressIndex]);
-      const parameter_string = "2$1$Add Bob$1$I propose to add Bob as a member$1$This is a test$1$https://github.com/realtakahashi/dao_oriented_protocol$1$" +
-        memberManagerContractAddressArray[contractAddressIndex] +
-        "$1$add_member$1$Bob$2$ZAP5o2BjWAo5uoKDE6b6Xkk4Ju7k6bDu24LNjgZbfM3iyiR";      
-      await createProposal(community_list_manager_test,proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex], parameter_string);
-      break;
-    case 9:
-      await checkProposalList(1,"Add Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
-      await createElection(community_list_manager_test,"0",electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 10:
-      await voteForProposal(community_list_manager_test, "0", "yes", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);      
-      break;
-    case 11:
-      await endElection(community_list_manager_test, "0", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 12:
-      await executeProposal(community_list_manager_test, "0",proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
-      break;
-    case 13:
-      await checkMember(2,"Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
-      await deployCommunityListManager(community_list_manager_test,proposalManagerContractAddressArray[0]);
-      break;
-    case 14:
-      await deployCommunityToken(community_list_manager_test,communityListManagerContractAddress, proposalManagerContractAddressArray[0]);
-      break;
-    case 15: 
-      const param1 = "2$1$Suggestion to install community_list_manager$1$I suggest to install community_list_manager which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
-        + applicaitonCoreContractAddressArray[0]
-        + "$1$install_software$1$CommunityListManager$2$CommunityListManager$2$description_community_list_anager$2$"
-        + communityListManagerContractAddress;
-      await createProposal(community_list_manager_test,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param1);
-      break;
-    case 16:
-      await checkProposalList(2,"Suggestion to install community_list_manager", applicaitonCoreContractAddressArray[0]);
-      await createElection(community_list_manager_test,"1",electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-      break;
-    case 17:
-        await voteForProposal(community_list_manager_test, "1", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 18:
-        deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
-        await voteForProposal(community_list_manager_test, "1", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 19:
-        deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
-        await endElection(community_list_manager_test, "1", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 20:
-        await installSoftware(community_list_manager_test,"1",applicaitonCoreContractAddressArray[0]);
-        break;
-    case 21:
-        await checkSoftwareList(1, "CommunityListManager", communityListManagerContractAddress,applicaitonCoreContractAddressArray[0]);
-        const param2 = "2$1$Suggestion to install community_token$1$I suggest to install community_token which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
-        + applicaitonCoreContractAddressArray[0]
-        + "$1$install_software$1$CommunityToken$2$CommunityToken$2$description_community_token$2$"
-        + communityTokenContractAddress;
-        await createProposal(community_list_manager_test,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param2);
-        break;
-    case 22:
-        await checkProposalList(3,"Suggestion to install community_token", applicaitonCoreContractAddressArray[0]);
-        await createElection(community_list_manager_test,"2",electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 23:
-        await voteForProposal(community_list_manager_test, "2", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 24:
-        deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
-        await voteForProposal(community_list_manager_test, "2", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 25:
-        deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
-        await endElection(community_list_manager_test, "2", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
-        break;
-    case 26:
-        await installSoftware(community_list_manager_test,"2",applicaitonCoreContractAddressArray[0]);
-        break;
-    case 27:
-        await checkSoftwareList(2, "CommunityToken", communityTokenContractAddress,applicaitonCoreContractAddressArray[0]);
-        await transferNativeToken(community_list_manager_test);
-        contractAddressIndex++;
-        console.log("######## community adding test start.");
-        break;
-    default:
-      await deploy_and_create_community();
-      break;
-  }
-  next_community_list_manager_scenario++;
-  console.log("# next_community_list_manager_scenario is:",next_community_list_manager_scenario);    
-}
+// const community_list_manager_test = async () => {
+//   switch (next_community_list_manager_scenario){
+//     case 1:
+//       console.log("####### community_list_manager_test start.");
+//       await deployProposalManager(community_list_manager_test);
+//       break;
+//     case 2:
+//       await deployMemberManager(community_list_manager_test);
+//       break;
+//     case 3:
+//       await deployElectionManager(community_list_manager_test);
+//       break;
+//     case 4:
+//       await deployApplicationCore(community_list_manager_test,memberManagerContractAddressArray[contractAddressIndex],proposalManagerContractAddressArray[contractAddressIndex],electionManagerContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 5:
+//       await callConfigurePreInstallMemberManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 6:
+//       await callConfigurePreInstallProposalManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 7:
+//       await callConfigurePreInstallElectionManager(community_list_manager_test, applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 8:
+//       await doAfterDeployTest(applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       const parameter_string = "2$1$Add Bob$1$I propose to add Bob as a member$1$This is a test$1$https://github.com/realtakahashi/dao_oriented_protocol$1$" +
+//         memberManagerContractAddressArray[contractAddressIndex] +
+//         "$1$add_member$1$Bob$2$ZAP5o2BjWAo5uoKDE6b6Xkk4Ju7k6bDu24LNjgZbfM3iyiR";      
+//       await createProposal(community_list_manager_test,proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex], parameter_string);
+//       break;
+//     case 9:
+//       await checkProposalList(1,"Add Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       await createElection(community_list_manager_test,"0",electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 10:
+//       await voteForProposal(community_list_manager_test, "0", "yes", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);      
+//       break;
+//     case 11:
+//       await endElection(community_list_manager_test, "0", electionManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 12:
+//       await executeProposal(community_list_manager_test, "0",proposalManagerContractAddressArray[contractAddressIndex], applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       break;
+//     case 13:
+//       await checkMember(2,"Bob", applicaitonCoreContractAddressArray[contractAddressIndex]);
+//       await deployCommunityListManager(community_list_manager_test,proposalManagerContractAddressArray[0]);
+//       break;
+//     case 14:
+//       await deployCommunityToken(community_list_manager_test,communityListManagerContractAddress, proposalManagerContractAddressArray[0]);
+//       break;
+//     case 15: 
+//       const param1 = "2$1$Suggestion to install community_list_manager$1$I suggest to install community_list_manager which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+//         + applicaitonCoreContractAddressArray[0]
+//         + "$1$install_software$1$CommunityListManager$2$CommunityListManager$2$description_community_list_anager$2$"
+//         + communityListManagerContractAddress;
+//       await createProposal(community_list_manager_test,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param1);
+//       break;
+//     case 16:
+//       await checkProposalList(2,"Suggestion to install community_list_manager", applicaitonCoreContractAddressArray[0]);
+//       await createElection(community_list_manager_test,"1",electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//       break;
+//     case 17:
+//         await voteForProposal(community_list_manager_test, "1", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 18:
+//         deployer = keyring.addFromUri("//Bob");
+//         await voteForProposal(community_list_manager_test, "1", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 19:
+//         deployer = keyring.addFromUri("//Alice");
+//         await endElection(community_list_manager_test, "1", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 20:
+//         await installSoftware(community_list_manager_test,"1",applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 21:
+//         await checkSoftwareList(1, "CommunityListManager", communityListManagerContractAddress,applicaitonCoreContractAddressArray[0]);
+//         const param2 = "2$1$Suggestion to install community_token$1$I suggest to install community_token which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
+//         + applicaitonCoreContractAddressArray[0]
+//         + "$1$install_software$1$CommunityToken$2$CommunityToken$2$description_community_token$2$"
+//         + communityTokenContractAddress;
+//         await createProposal(community_list_manager_test,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param2);
+//         break;
+//     case 22:
+//         await checkProposalList(3,"Suggestion to install community_token", applicaitonCoreContractAddressArray[0]);
+//         await createElection(community_list_manager_test,"2",electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 23:
+//         await voteForProposal(community_list_manager_test, "2", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 24:
+//         deployer = keyring.addFromUri("//Bob");
+//         await voteForProposal(community_list_manager_test, "2", "yes", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 25:
+//         deployer = keyring.addFromUri("//Alice");
+//         await endElection(community_list_manager_test, "2", electionManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 26:
+//         await installSoftware(community_list_manager_test,"2",applicaitonCoreContractAddressArray[0]);
+//         break;
+//     case 27:
+//         await checkSoftwareList(2, "CommunityToken", communityTokenContractAddress,applicaitonCoreContractAddressArray[0]);
+//         await transferNativeToken(community_list_manager_test);
+//         contractAddressIndex++;
+//         console.log("######## community adding test start.");
+//         break;
+//     default:
+//       await deploy_and_create_community();
+//       break;
+//   }
+//   next_community_list_manager_scenario++;
+//   console.log("# next_community_list_manager_scenario is:",next_community_list_manager_scenario);    
+// }
 
 const deploy_and_create_community = async () => {
   switch(next_community_scenario){
     case 1:
       console.log("##### deploy & create community call test is started.");
+      contractAddressIndex++;
+      memberManagerContractAddressArray.push("XnitRyJJpbbSksv3XpK17SmQSW9xZiRmfuiqYrfMtxJY8uY");
+      proposalManagerContractAddressArray.push("WaHFScsyrxSa2pjtiJeGMFbTfWU2zjeRWoqjnfCDwfMJvcc");
+      electionManagerContractAddressArray.push("bgwaMfNYYkNpyu9SmRY8shh3rS5LgGofTHJtMw29U5hYSpj");
+      applicaitonCoreContractAddressArray.push("WfePi6CG4L9MDvPFzwx2tzYxcHS2mGqyLP1c6DCbqaeMqmy");
+      communityListManagerContractAddress = "Xhc9jbycNBqCBZiSHuFurXBDNzM5EaFPZ9KT5fUdvvhxFuB";
+      communityTokenContractAddress = "YbfWqMRK8kfsQrtawBTqRBMEaYgqtw8W1JHHrapiwiLzSmG";
       await deployProposalManager(deploy_and_create_community);
       break;
     case 2:
-      await deployCommunity(deploy_and_create_community,10,"TestCommunity1","This community is for test.Our community HP url is https://github.com/realtakahashi");
+      await deployCommunity(deploy_and_create_community,10,"TestCommunity2","This community is for test.Our community HP url is https://github.com/realtakahashi");
       break;
     case 3:
       await deployUpdateMemberManager(deploy_and_create_community,communityContractAddress);
@@ -301,29 +309,29 @@ const communityBusinessLogicTest = async () => {
       await checkRequestListToAddCommunityList(1,communityContractAddress,communityListManagerContractAddress);
       const param2 = "2$1$Suggestion to add community$1$I suggest to add community which I have implemented$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
         + communityListManagerContractAddress
-        + "$1$add_community$1$0";
+        + "$1$add_community$1$1";
       await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param2);  
       break;
     case 3:
-      await checkProposalList(4,"Suggestion to add community", applicaitonCoreContractAddressArray[0]);
-      await createElection(communityBusinessLogicTest,"3",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await checkProposalList(7,"Suggestion to add community", applicaitonCoreContractAddressArray[0]);
+      await createElection(communityBusinessLogicTest,"6",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 4:
-      await voteForProposal(communityBusinessLogicTest, "3", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      await voteForProposal(communityBusinessLogicTest, "6", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 5:
-      deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
-      await voteForProposal(communityBusinessLogicTest, "3", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      deployer = keyring.addFromUri("//Bob");
+      await voteForProposal(communityBusinessLogicTest, "6", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 6:
-      deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
-      await endElection(communityBusinessLogicTest, "3", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      deployer = keyring.addFromUri("//Alice");
+      await endElection(communityBusinessLogicTest, "6", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 7:
-      await executeProposal(communityBusinessLogicTest, "3",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await executeProposal(communityBusinessLogicTest, "6",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 8:
-      await checkCommunityList(1,communityContractAddress,communityListManagerContractAddress);
+      await checkCommunityList(2,communityContractAddress,communityListManagerContractAddress);
       const param3 = "2$1$Suggestion to reward community native token$1$I suggest to reward$1$https://github.com/realtakahashi/dao_oriented_protocol$1$This is test$1$"
         + communityListManagerContractAddress
         + "$1$distribution_of_rewards4communities$1$"
@@ -331,22 +339,22 @@ const communityBusinessLogicTest = async () => {
       await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param3);  
       break;
     case 9:
-      await checkProposalList(5,"Suggestion to reward community native token", applicaitonCoreContractAddressArray[0]);
-      await createElection(communityBusinessLogicTest,"4",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await checkProposalList(8,"Suggestion to reward community native token", applicaitonCoreContractAddressArray[0]);
+      await createElection(communityBusinessLogicTest,"7",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 10:
-      await voteForProposal(communityBusinessLogicTest, "4", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      await voteForProposal(communityBusinessLogicTest, "7", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 11:
-      deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
-      await voteForProposal(communityBusinessLogicTest, "4", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      deployer = keyring.addFromUri("//Bob");
+      await voteForProposal(communityBusinessLogicTest, "7", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 12:
-      deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
-      await endElection(communityBusinessLogicTest, "4", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      deployer = keyring.addFromUri("//Alice");
+      await endElection(communityBusinessLogicTest, "7", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 13:
-      await executeProposal(communityBusinessLogicTest, "4",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await executeProposal(communityBusinessLogicTest, "7",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 14:
       await checkCommunityCoreBalance(2222,communityContractAddress);
@@ -357,22 +365,22 @@ const communityBusinessLogicTest = async () => {
       await createProposal(communityBusinessLogicTest,proposalManagerContractAddressArray[0],applicaitonCoreContractAddressArray[0], param4);  
       break;
     case 15:
-      await checkProposalList(6,"Suggestion to reward community token", applicaitonCoreContractAddressArray[0]);
-      await createElection(communityBusinessLogicTest,"5",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await checkProposalList(9,"Suggestion to reward community token", applicaitonCoreContractAddressArray[0]);
+      await createElection(communityBusinessLogicTest,"8",electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 16:
-      await voteForProposal(communityBusinessLogicTest, "5", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      await voteForProposal(communityBusinessLogicTest, "8", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 17:
-      deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
-      await voteForProposal(communityBusinessLogicTest, "5", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
+      deployer = keyring.addFromUri("//Bob");
+      await voteForProposal(communityBusinessLogicTest, "8", "yes", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);      
       break;
     case 18:
-      deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
-      await endElection(communityBusinessLogicTest, "5", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      deployer = keyring.addFromUri("//Alice");
+      await endElection(communityBusinessLogicTest, "8", electionManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 19:
-      await executeProposal(communityBusinessLogicTest, "5",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
+      await executeProposal(communityBusinessLogicTest, "8",proposalManagerContractAddressArray[0], applicaitonCoreContractAddressArray[0]);
       break;
     case 20:
       await 
@@ -392,11 +400,11 @@ const communityBusinessLogicTest = async () => {
       await voteForProposal(communityBusinessLogicTest, "1", "yes", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);      
       break;
     case 23:
-      deployer = keyring.addFromUri("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89");
+      deployer = keyring.addFromUri("//Bob");
       await voteForProposal(communityBusinessLogicTest, "1", "yes", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);      
       break;
     case 24:
-      deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
+      deployer = keyring.addFromUri("//Alice");
       await endElection(communityBusinessLogicTest, "1", electionManagerContractAddressArray[1], applicaitonCoreContractAddressArray[1]);
       break;
     case 25:
@@ -1692,14 +1700,13 @@ export const getGasLimitForNotDeploy = (api: any): any => {
 
 export const executeAllTest = async () => {
   console.log("Start executeAllTest");
-  
-  // const wsProvider = new WsProvider("ws://127.0.0.1:9944");
-  const wsProvider = new WsProvider("wss://rpc.shibuya.astar.network");
+
+  const wsProvider = new WsProvider("ws://127.0.0.1:9944");
   api = await ApiPromise.create({ provider: wsProvider });
   keyring = new Keyring({ type: "sr25519" });
-  deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
+  deployer = keyring.addFromUri("//Alice");
 
-  await community_list_manager_test();
+  await deploy_and_create_community();
   // await deploy_and_create_community_list_manager()
   // await base_dao_creating_test();
   // await deploy_and_create_community();

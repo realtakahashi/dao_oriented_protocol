@@ -201,7 +201,9 @@ mod community_sub_token {
                 vec_of_parameters[0].clone(),
                 caller_eoa,
             ) {
-                Ok(()) => (),
+                Ok(()) => {
+                    self._burn_from(caller_eoa, amount);
+                },
                 Err(_) => {
                     return Err(ContractBaseError::Custom(
                         "exchange_2_community_token".to_string(),
