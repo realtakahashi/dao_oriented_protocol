@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(min_specialization)]
 
-#[openbrush::contract]
+#[ink::contract]
 mod community_token {
     use contract_helper::common::common_logics;
     use contract_helper::traits::contract_base::contract_base::*;
@@ -12,12 +12,8 @@ mod community_token {
     use ink::prelude::string::ToString;
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use openbrush::{storage::Mapping, traits::Storage};
+    use ink::{storage::Mapping, traits::Storage};
     use scale::Decode;
-    // use openbrush::contracts::psp22::*;
-    use openbrush::{
-        contracts::psp22::extensions::metadata::*,
-    };
     use community_types::types::{ RewardInfo, RewardInfoType2 };
 
     #[ink(storage)]
@@ -87,8 +83,8 @@ mod community_token {
     impl CommunityToken {
         #[ink(constructor)]
         pub fn new(
-            name: Option<openbrush::traits::String>,
-            symbol: Option<openbrush::traits::String>,
+            name: String,
+            symbol: String,
             decimal: u8,
             total_supply: Balance, 
             community_list_manager_address:AccountId,

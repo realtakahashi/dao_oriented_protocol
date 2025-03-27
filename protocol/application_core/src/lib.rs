@@ -2,7 +2,7 @@
 
 // pub use self::application_core::{ApplicationCore, ApplicationCoreRef};
 
-#[openbrush::contract]
+#[ink::contract]
 mod application_core {
     // use contract_helper::traits::contract_base::contract_base::contractbase_external::ContractBase;
     use contract_helper::traits::contract_base::contract_base::*;
@@ -13,7 +13,7 @@ mod application_core {
     use ink::prelude::string::ToString;
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use openbrush::{storage::Mapping, traits::Storage};
+    use ink::{storage::Mapping};
 
     //     use communication_base::communication_base::CommunicationBaseRef;
     use scale::Decode;
@@ -62,7 +62,6 @@ mod application_core {
     pub type Result<T> = core::result::Result<T, Error>;
 
     #[ink(storage)]
-    #[derive(Storage)]
     pub struct ApplicationCore {
         installed_software_list_with_address: Mapping<AccountId, SoftwareInfo>,
         installed_software_list_with_id: Mapping<u128, SoftwareInfo>,

@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[openbrush::contract]
+#[ink::contract]
 mod update_member_manager {
     use default_contract::DefaultContractRef;
     use contract_helper::common::common_logics::{self, ContractBaseError};
@@ -8,7 +8,7 @@ mod update_member_manager {
     use contract_helper::traits::types::types::*;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
-    use openbrush::storage::Mapping;
+    use ink::storage::Mapping;
     use scale::{Decode, Encode};
 
     #[ink(storage)]

@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[openbrush::contract]
+#[ink::contract]
 mod community_core {
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
@@ -11,7 +11,7 @@ mod community_core {
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use openbrush::{storage::Mapping, traits::Storage};
+    use ink::{storage::Mapping, traits::Storage};
     use scale::Decode;
     use community_types::types::RewardInfo;
 

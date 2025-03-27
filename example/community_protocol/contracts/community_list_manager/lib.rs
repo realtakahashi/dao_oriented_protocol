@@ -2,7 +2,7 @@
 
 pub use self::community_list_manager::{CommunityListManager, CommunityListManagerRef};
 
-#[openbrush::contract]
+#[ink::contract]
 mod community_list_manager {
     use community_types::types::{ CommunityInfoWithId, RewardInfo };
     use contract_helper::common::common_logics;
@@ -14,7 +14,7 @@ mod community_list_manager {
     use ink::prelude::string::ToString;
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use openbrush::{storage::Mapping, traits::Storage};
+    use ink::{storage::Mapping, traits::Storage};
     use scale::{ Decode, Encode };
 
     // #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]

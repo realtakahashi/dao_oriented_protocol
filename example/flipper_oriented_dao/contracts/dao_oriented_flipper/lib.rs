@@ -2,7 +2,7 @@
 
 // const EVM_ID: u8 = 0x0F;
 
-#[openbrush::contract]
+#[ink::contract]
 // #[ink::contract(env = xvm_environment::XvmDefaultEnvironment)]
 mod dao_oriented_flipper {
     // use communication_base::communication_base::CommunicationBaseRef;
@@ -14,7 +14,7 @@ mod dao_oriented_flipper {
     use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
-    use openbrush::storage::Mapping;
+    use ink::storage::Mapping;
     use scale::{Decode, Encode};
     // use hex_literal::hex;
 

@@ -1,15 +1,25 @@
 use ink::prelude::{ vec, vec::Vec };
 use ink::prelude::string::{ String, ToString };
-use openbrush::traits::AccountId;
+use ink::primitives::AccountId;
 pub use crate::traits::errors::contract_error::ContractBaseError;
 
 pub fn convert_string_to_accountid(account_str: &str) -> Option<AccountId> {
-    let mut output = vec![0xFF; 35];
-    match bs58::decode(account_str).into(&mut output) {
+    // let mut output = vec![0xFF; 35];
+    // match bs58::decode(account_str).onto(&mut output){
+    //     Ok(_) => (),
+    //     Err(_) => return None,
+    // };
+    // match bs58::decode(account_str).into_vec() {
+    //     Ok(decoded_bytes) => output = decoded_bytes,
+    //     Err(_) => return None,
+    // };
+    // let cut_address_vec: Vec<_> = output.drain(1..33).collect();
+    let mut output = [0xFF; 35];
+    match bs58::decode(account_str).onto(&mut output) {
         Ok(_) => (),
         Err(_) => return None,
     };
-    let cut_address_vec: Vec<_> = output.drain(1..33).collect();
+    let cut_address_vec: Vec<_> = output[1..33].to_vec();
     let mut array = [0; 32];
     let bytes = &cut_address_vec[..array.len()];
     array.copy_from_slice(bytes);
@@ -24,7 +34,7 @@ pub fn convert_hexstring_to_accountid(hex_account_str: String) -> Option<Account
             let bytes = &value[..array.len()];
             array.copy_from_slice(bytes);
             let account_id: AccountId = array.into();
-            return Some(account_id);
+            Some(account_id)
         },
         Err(_) => None,
     }
