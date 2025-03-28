@@ -35,9 +35,8 @@ mod default_election {
             self.application_core_address
         }
 
-        /// get data interface
         #[ink(message)]
-        fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
             match target_function.as_str() {
                 "get_election_info_list" => {
@@ -52,58 +51,7 @@ mod default_election {
         }
 
         #[ink(message)]
-        fn _set_application_core_address_impl(
-            &mut self,
-            application_core_address: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.application_core_address {
-                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => self.application_core_address = Some(application_core_address),
-            }
-            Ok(())
-        }
-
-        #[ink(message)]
-        fn _get_command_list(&self) -> Vec<String> {
-            self.command_list.clone()
-        }
-
-        #[ink(message)]
-        fn _function_calling_switch(
-            &mut self,
-            command: String,
-            vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match command.as_str() {
-                "create_election" => self._create_election(vec_of_parameters, caller_eoa),
-                // "start_election" => self._start_election(vec_of_parameters),
-                "vote" => self._vote(vec_of_parameters, caller_eoa),
-                "end_election" => self._end_election(vec_of_parameters, caller_eoa),
-                "reset_minimum_voter_turnout_percentage" => {
-                    self._reset_minimum_voter_turnout_percentage(vec_of_parameters, caller_eoa)
-                }
-                "reset_passing_percentage" => {
-                    self._reset_passing_percentage(vec_of_parameters, caller_eoa)
-                }
-                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
-                "set_application_core_address" => {
-                    self._set_application_core_address(vec_of_parameters)
-                }
-                "update_proposal_manager_address" => {
-                    self._update_proposal_manager_address(vec_of_parameters, caller_eoa)
-                }
-                "update_member_manager_address" => self._update_member_manager(vec_of_parameters),
-                "set_member_manager_address" => self._set_member_manager_address(vec_of_parameters),
-                "set_proposal_manager_address" => {
-                    self._set_proposal_manager_address(vec_of_parameters)
-                }
-                _ => Err(ContractBaseError::CommnadNotFound),
-            }
-        }
-
-        #[ink(message)]
-        fn _execute_interface(
+        fn extarnal_execute_interface(
             &mut self,
             command: String,
             parameters_csv: String,
@@ -126,37 +74,6 @@ mod default_election {
                 );
                 return Err(ContractBaseError::CommnadNotFound);
             }
-            self._execute_interface_impl(command, parameters_csv, caller_eoa)
-        }
-
-        #[ink(message)]
-        fn _set_application_core_address(
-            &mut self,
-            vec_of_parameters: Vec<String>,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.get_application_core_address() {
-                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => match vec_of_parameters.len() {
-                    1 => {
-                        match common_logics::convert_hexstring_to_accountid(
-                            vec_of_parameters[0].clone(),
-                        ) {
-                            Some(value) => self._set_application_core_address_impl(value),
-                            None => return Err(ContractBaseError::ParameterInvalid),
-                        }
-                    }
-                    _ => return Err(ContractBaseError::ParameterInvalid),
-                },
-            }
-        }
-
-        #[ink(message)]
-        fn _execute_interface_impl(
-            &mut self,
-            command: String,
-            parameters_csv: String,
-            caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
             let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
                 Some(_index) => parameters_csv
                     .split(&"$1$".to_string())
@@ -169,18 +86,9 @@ mod default_election {
                 }
             };
             self._function_calling_switch(command, vec_of_parameters, caller_eoa)
+
         }
 
-        #[ink(message)]
-        fn _modifier_only_call_from_application_core(&self, caller: AccountId) -> bool {
-            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
-            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
-
-            match self.get_application_core_address() {
-                Some(value) => value == caller,
-                None => false,
-            }
-        }
 
         // /// [private] change status whether this contract can use
         // fn _change_enable_or_not(
@@ -244,20 +152,10 @@ mod default_election {
             }
         }
 
-        #[ink(message)]
-        pub fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
-
-        #[ink(message)]
-        pub fn extarnal_execute_interface(
-            &mut self,
-            command: String,
-            parameters_csv: String,
-            caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            self._execute_interface(command, parameters_csv, caller_eoa)
-        }
+        // #[ink(message)]
+        // pub fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
+        //     self.get_data(target_function)
+        // }
 
         // #[ink(message)]
         // pub fn set_proposal_manager_address(
@@ -296,6 +194,84 @@ mod default_election {
         //     }
         //     Ok(())
         // }
+
+        fn _function_calling_switch(
+            &mut self,
+            command: String,
+            vec_of_parameters: Vec<String>,
+            caller_eoa: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match command.as_str() {
+                "create_election" => self._create_election(vec_of_parameters, caller_eoa),
+                // "start_election" => self._start_election(vec_of_parameters),
+                "vote" => self._vote(vec_of_parameters, caller_eoa),
+                "end_election" => self._end_election(vec_of_parameters, caller_eoa),
+                "reset_minimum_voter_turnout_percentage" => {
+                    self._reset_minimum_voter_turnout_percentage(vec_of_parameters, caller_eoa)
+                }
+                "reset_passing_percentage" => {
+                    self._reset_passing_percentage(vec_of_parameters, caller_eoa)
+                }
+                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                "set_application_core_address" => {
+                    self._set_application_core_address(vec_of_parameters)
+                }
+                "update_proposal_manager_address" => {
+                    self._update_proposal_manager_address(vec_of_parameters, caller_eoa)
+                }
+                "update_member_manager_address" => self._update_member_manager(vec_of_parameters),
+                "set_member_manager_address" => self._set_member_manager_address(vec_of_parameters),
+                "set_proposal_manager_address" => {
+                    self._set_proposal_manager_address(vec_of_parameters)
+                }
+                _ => Err(ContractBaseError::CommnadNotFound),
+            }
+        }
+
+        fn _get_command_list(&self) -> Vec<String> {
+            self.command_list.clone()
+        }
+
+        fn _set_application_core_address(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.get_application_core_address() {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => match vec_of_parameters.len() {
+                    1 => {
+                        match common_logics::convert_hexstring_to_accountid(
+                            vec_of_parameters[0].clone(),
+                        ) {
+                            Some(value) => self._set_application_core_address_impl(value),
+                            None => return Err(ContractBaseError::ParameterInvalid),
+                        }
+                    }
+                    _ => return Err(ContractBaseError::ParameterInvalid),
+                },
+            }
+        }
+
+        fn _set_application_core_address_impl(
+            &mut self,
+            application_core_address: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.application_core_address {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => self.application_core_address = Some(application_core_address),
+            }
+            Ok(())
+        }
+
+        fn _modifier_only_call_from_application_core(&self, caller: AccountId) -> bool {
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
+
+            match self.get_application_core_address() {
+                Some(value) => value == caller,
+                None => false,
+            }
+        }
 
         fn _set_member_manager_address(
             &mut self,

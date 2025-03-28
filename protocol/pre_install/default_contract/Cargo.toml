@@ -14,7 +14,7 @@ contract_helper = { path = "../../logics", default-features = false, features = 
 
 [lib]
 path = "lib.rs"
-crate-type = ["rlib"]
+# crate-type = ["rlib"]
 
 [features]
 default = ["std"]

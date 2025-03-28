@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 // pub use self::default_contract::{DefaultContract, DefaultContractRef};
 
@@ -17,7 +17,7 @@ pub mod default_contract {
 
     impl ContractBase for DefaultContract {
         #[ink(message)]
-        fn _execute_interface(
+        fn extarnal_execute_interface(
             &mut self,
             command: String,
             parameters_csv: String,
@@ -40,37 +40,6 @@ pub mod default_contract {
                 );
                 return Err(ContractBaseError::CommnadNotFound);
             }
-            self._execute_interface_impl(command, parameters_csv, caller_eoa)
-        }
-
-        #[ink(message)]
-        fn _set_application_core_address(
-            &mut self,
-            vec_of_parameters: Vec<String>,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.get_application_core_address() {
-                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => match vec_of_parameters.len() {
-                    1 => {
-                        match common_logics::convert_hexstring_to_accountid(
-                            vec_of_parameters[0].clone(),
-                        ) {
-                            Some(value) => self._set_application_core_address_impl(value),
-                            None => return Err(ContractBaseError::ParameterInvalid),
-                        }
-                    }
-                    _ => return Err(ContractBaseError::ParameterInvalid),
-                },
-            }
-        }
-
-        #[ink(message)]
-        fn _execute_interface_impl(
-            &mut self,
-            command: String,
-            parameters_csv: String,
-            caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
             let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
                 Some(_index) => parameters_csv
                     .split(&"$1$".to_string())
@@ -83,17 +52,8 @@ pub mod default_contract {
                 }
             };
             self._function_calling_switch(command, vec_of_parameters, caller_eoa)
-        }
 
-        #[ink(message)]
-        fn _modifier_only_call_from_application_core(&self, caller: AccountId) -> bool {
-            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
-            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
-
-            match self.get_application_core_address() {
-                Some(value) => value == caller,
-                None => false,
-            }
+            // self._execute_interface_impl(command, parameters_csv, caller_eoa)
         }
 
         #[ink(message)]
@@ -102,37 +62,11 @@ pub mod default_contract {
         }
 
         #[ink(message)]
-        fn get_data(&self, _target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, _target_function: String) -> Vec<Vec<u8>> {
             let return_value: Vec<Vec<u8>> = Vec::new();
             return_value
         }
 
-        #[ink(message)]
-        fn _set_application_core_address_impl(
-            &mut self,
-            application_core_address: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            self.application_core_address = Some(application_core_address);
-            Ok(())
-        }
-
-        #[ink(message)]
-        fn _get_command_list(&self) -> Vec<String> {
-            self.command_list.clone()
-        }
-
-        #[ink(message)]
-        fn _function_calling_switch(
-            &mut self,
-            command: String,
-            _vec_of_parameters: Vec<String>,
-            _caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match command.as_str() {
-                "test_function" => self._test_function(),
-                _ => Err(ContractBaseError::CommnadNotFound),
-            }
-        }
 
         // fn _change_enable_or_not(&mut self, _vec_of_parameters: Vec<String>) -> core::result::Result<(), ContractBaseError>{
         //     self.is_enable = true;
@@ -151,19 +85,25 @@ pub mod default_contract {
             }
         }
 
-        #[ink(message)]
-        pub fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
+        // #[ink(message)]
+        // pub fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
+        //     self.get_data(target_function)
+        // }
 
-        #[ink(message)]
-        pub fn extarnal_execute_interface(
+        fn _function_calling_switch(
             &mut self,
             command: String,
-            parameters_csv: String,
-            caller_eoa: AccountId,
+            _vec_of_parameters: Vec<String>,
+            _caller_eoa: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            self._execute_interface(command, parameters_csv, caller_eoa)
+            match command.as_str() {
+                "test_function" => self._test_function(),
+                _ => Err(ContractBaseError::CommnadNotFound),
+            }
+        }
+
+        fn _get_command_list(&self) -> &Vec<String> {
+            &self.command_list
         }
 
         fn _test_function(&self) -> core::result::Result<(), ContractBaseError> {
