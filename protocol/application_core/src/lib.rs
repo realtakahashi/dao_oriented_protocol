@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std,no_main)]
 
 // pub use self::application_core::{ApplicationCore, ApplicationCoreRef};
 
@@ -20,6 +20,7 @@ mod application_core {
 
     #[derive(Debug, Clone, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    #[allow(clippy::cast_possible_truncation)]
     pub enum SoftwareKind {
         MemberManager,
         ProposalManager,
@@ -29,6 +30,7 @@ mod application_core {
 
     #[derive(Debug, Clone, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
+    #[allow(clippy::cast_possible_truncation)]
     pub enum SoftwareType {
         PreInstall,
         NormalInstall,
@@ -47,6 +49,7 @@ mod application_core {
 
     #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[allow(clippy::cast_possible_truncation)]
     pub enum Error {
         TheSoftwareIsAlreadyInstalled,
         TheSoftwareDoesNotExists,
@@ -105,7 +108,7 @@ mod application_core {
                 contract_address: self.pre_install_member_manager,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id += 1;
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             ink::env::debug_println!("########## application_core:configure_pre_install_member_manager [2] ###############");
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_member_manager, self.env().account_id()){
                 Ok(()) => (),
@@ -126,7 +129,7 @@ mod application_core {
                 contract_address: self.pre_install_proposal_manager,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id += 1;
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_proposal_manager, self.env().account_id()) {
                 Ok(()) => (),
                 Err(error) => return Err(error),
@@ -149,7 +152,7 @@ mod application_core {
                 contract_address: self.pre_install_election,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id += 1;
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_election, self.env().account_id()){
                 Ok(()) => (),
                 Err(error) => return Err(error),
@@ -385,7 +388,7 @@ mod application_core {
                         Err(error) => return Err(error),
                     }
                     // todo: update proposal status Executed -> Finished
-                    self.next_software_id += 1;
+                    self.next_software_id = self.next_software_id.saturating_add(1);
                     ink::env::debug_println!("########## application_core:install_software [5] ");
                     Ok(())
                 }

@@ -4,6 +4,9 @@
   "main": "dao_oriented_flipper_contract_test.ts",
   "license": "MIT",
   "dependencies": {
-    "ts-node": "^10.9.1"
+    "@polkadot/api-contract": "^15.9.1",
+    "@types/node": "^22.13.14",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.8.2"
   }
 }
