@@ -1,0 +1,32 @@
+# --- node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- TypeScript build outputs ---
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# --- IDEs & editors ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Environment variables ---
+.env
+.env.* 
+
+# --- Optional: coverage reports ---
+coverage/
+
+# --- Optional: logs ---
+logs
+*.log

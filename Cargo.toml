@@ -13,4 +13,6 @@ members = [
     "example/community_protocol/contracts/community_token",
     "example/community_protocol/contracts/community_sub_token",
     "example/community_protocol/contracts/update_application_core",
+    "example/color_the_internet/color_the_internet",
+    "example/color_the_internet/governance_token",
 ]
