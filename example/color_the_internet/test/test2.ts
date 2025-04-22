@@ -1611,9 +1611,7 @@ const deployMemberManager = async (callBack: () => void) => {
   const tx = contract.tx.new({ gasLimit, storageDepositLimit }, "Alice");
 
   //@ts-ignore
-  const unsub = await tx.signAndSend(
-    deployer,
-    ({ events = [], status, contract }) => {
+  const unsub = await tx.signAndSend(deployer,({ events = [], status, contract }) => {
       if (status.isFinalized) {
         if (checkEventsAndInculueError(events)) {
           console.log("Transaction is failure.");
@@ -1641,9 +1639,7 @@ const deployProposalManager = async (callBack: () => void) => {
   const tx = contract.tx.new({ gasLimit, storageDepositLimit });
 
   //@ts-ignore
-  const unsub = await tx.signAndSend(
-    deployer,
-    ({ events = [], status, contract }) => {
+  const unsub = await tx.signAndSend(deployer,({ events = [], status, contract }) => {
       if (status.isFinalized) {
         if (checkEventsAndInculueError(events)) {
           console.log("Transaction is failure.");
@@ -1670,9 +1666,9 @@ const deployElectionManager = async (callBack: () => void) => {
 
   const tx = contract.tx.new({ gasLimit, storageDepositLimit });
 
-  //@ts-ignore
   const unsub = await tx.signAndSend(
     deployer,
+    //@ts-ignore
     ({ events = [], status, contract }) => {
       if (status.isFinalized) {
         if (checkEventsAndInculueError(events)) {
@@ -1705,9 +1701,9 @@ const deployApplicationCore = async (callBack: () => void) => {
     electionManagerContractAddress
   );
 
-  //@ts-ignore
   const unsub = await tx.signAndSend(
     deployer,
+    //@ts-ignore
     ({ events = [], status, contract }) => {
       if (status.isFinalized) {
         if (checkEventsAndInculueError(events)) {
@@ -1813,7 +1809,11 @@ const deployColorTheInternet = async (callBack: () => void) => {
     proofSize: 131072,
   });
 
-  const tx = contract.tx.new({ gasLimit, storageDepositLimit }, 1);
+  const tx = contract.tx.new(
+    { gasLimit, storageDepositLimit }, 
+    1,
+    proposalManagerContractAddress
+);
 
   //@ts-ignore
   const unsub = await tx.signAndSend(
