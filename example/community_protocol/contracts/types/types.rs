@@ -4,7 +4,7 @@ pub mod types {
     use ink::prelude::string::{String};
     use ink::prelude::vec::Vec;
     use ink::primitives::AccountId;
-    use ink::env::balance;
+//    use ink::env::balance;
 
     #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
@@ -21,7 +21,7 @@ pub mod types {
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
     pub struct RewardInfo {
         pub address:AccountId,
-        pub amount:balance,
+        pub amount:u128,
     }
 
     #[derive( Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
