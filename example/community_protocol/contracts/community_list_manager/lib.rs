@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 pub use self::community_list_manager::{CommunityListManager, CommunityListManagerRef};
 
@@ -14,7 +14,7 @@ mod community_list_manager {
     use ink::prelude::string::ToString;
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use ink::{storage::Mapping, traits::Storage};
+    use ink::{storage::Mapping};
     use scale::{ Decode, Encode };
 
     // #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
@@ -34,7 +34,7 @@ mod community_list_manager {
     // }
 
     #[ink(storage)]
-    #[derive(Default, Storage)]
+    #[derive(Default)]
     pub struct CommunityListManager {
         community_list_with_address: Mapping<AccountId, CommunityInfoWithId>,
         community_list_with_id: Mapping<u128, CommunityInfoWithId>,
@@ -54,7 +54,7 @@ mod community_list_manager {
 
         /// get data interface
         #[ink(message)]
-        fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
             match target_function.as_str() {
                 "get_community_list" => {
@@ -66,6 +66,95 @@ mod community_list_manager {
                 _ => (),
             }
             result
+        }
+
+        #[ink(message)]
+        fn extarnal_execute_interface(
+            &mut self,
+            command: String,
+            parameters_csv: String,
+            caller_eoa: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            let command_list = self._get_command_list();
+            if command_list
+                .iter()
+                .filter(|item| *item == &command)
+                .collect::<Vec<&String>>()
+                .len()
+                == 0
+            {
+                return Err(ContractBaseError::CommnadNotFound);
+            }
+            let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
+                Some(_index) => parameters_csv
+                    .split(&"$1$".to_string())
+                    .map(|col| col.to_string())
+                    .collect(),
+                None => {
+                    let mut rec: Vec<String> = Vec::new();
+                    rec.push(parameters_csv);
+                    rec
+                }
+            };
+            self._function_calling_switch(command, vec_of_parameters, caller_eoa)
+        }
+    }
+
+    impl CommunityListManager {
+        #[ink(constructor)]
+        pub fn new(proposal_manager_address:AccountId) -> Self {
+            let mut instance = Self::default();
+            instance.command_list.push("set_application_core_address".to_string());
+            instance.command_list.push("add_community".to_string());
+            instance.command_list.push("delete_community".to_string());
+            instance.command_list.push("distribution_of_rewards4communities".to_string());
+            instance.command_list.push("add2request_list".to_string());
+            instance.proposal_manager_address = Some(proposal_manager_address);
+            instance
+        }
+
+        #[ink(message)]
+        pub fn get_community_list(&self) -> Vec<CommunityInfoWithId> {
+            let mut result:Vec<CommunityInfoWithId> = Vec::new();
+            for i in 0..self.next_community_id {
+                match self.community_list_with_id.get(&i) {
+                    Some(value) => result.push(value),
+                    None => (),
+                }
+            }
+            result
+        }
+
+        #[ink(message)]
+        pub fn get_request_list4adding(&self) -> Vec<CommunityInfoWithId> {
+            let mut result:Vec<CommunityInfoWithId> = Vec::new();
+            for i in 0..self.next_request_id {
+                match self.request_list4adding_list.get(&i) {
+                    Some(value) => result.push(value),
+                    None => (),
+                }
+            }
+            result
+        }
+
+        fn _set_application_core_address(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.get_application_core_address() {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => match vec_of_parameters.len() {
+                    1 => {
+                        match common_logics::convert_hexstring_to_accountid(
+                            vec_of_parameters[0].clone(),
+                        ) {
+                            Some(value) => self._set_application_core_address_impl(value),
+                            None => return Err(ContractBaseError::ParameterInvalid),
+                        }
+                    }
+                    _ => return Err(ContractBaseError::ParameterInvalid),
+                },
+            }
         }
 
         fn _set_application_core_address_impl(
@@ -100,54 +189,7 @@ mod community_list_manager {
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
         }
-    }
 
-    impl CommunityListManager {
-        #[ink(constructor)]
-        pub fn new(proposal_manager_address:AccountId) -> Self {
-            let mut instance = Self::default();
-            instance.command_list.push("set_application_core_address".to_string());
-            instance.command_list.push("add_community".to_string());
-            instance.command_list.push("delete_community".to_string());
-            instance.command_list.push("distribution_of_rewards4communities".to_string());
-            instance.command_list.push("add2request_list".to_string());
-            instance.proposal_manager_address = Some(proposal_manager_address);
-            instance
-        }
-
-        #[ink(message)]
-        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
-
-        #[ink(message)]
-        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
-            self._execute_interface(command, parameters_csv, caller_eoa)
-        }
-
-        #[ink(message)]
-        pub fn get_community_list(&self) -> Vec<CommunityInfoWithId> {
-            let mut result:Vec<CommunityInfoWithId> = Vec::new();
-            for i in 0..self.next_community_id {
-                match self.community_list_with_id.get(&i) {
-                    Some(value) => result.push(value),
-                    None => (),
-                }
-            }
-            result
-        }
-
-        #[ink(message)]
-        pub fn get_request_list4adding(&self) -> Vec<CommunityInfoWithId> {
-            let mut result:Vec<CommunityInfoWithId> = Vec::new();
-            for i in 0..self.next_request_id {
-                match self.request_list4adding_list.get(&i) {
-                    Some(value) => result.push(value),
-                    None => (),
-                }
-            }
-            result
-        }
 
         fn _add2request_list(&mut self, vec_of_parameters:Vec<String>) -> core::result::Result<(), ContractBaseError>{
             ink::env::debug_println!("########## community_list_manager:_add2request_list Call 1");
@@ -200,7 +242,7 @@ mod community_list_manager {
                 application_core_contract_address:Some(applicaiton_core_address),
             };
             self.request_list4adding_list.insert(&self.next_request_id, &community_info);
-            self.next_request_id += 1;
+            self.next_request_id.saturating_add(1);
             ink::env::debug_println!("########## community_list_manager:_add2request_list Call 3");
             Ok(())
         }
@@ -225,7 +267,7 @@ mod community_list_manager {
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
             self.community_list_with_id.insert(&self.next_community_id, &community_info);
-            self.next_community_id +=1;
+            self.next_community_id.saturating_add(1);
             self.community_list_with_address.insert(&community_info.contract_address.unwrap(), &community_info);
             self.request_list4adding_list.remove(&request_id);
             ink::env::debug_println!("########## community_list_manager:_add_community Call 5 : community_info: {:?}", community_info);

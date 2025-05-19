@@ -78,10 +78,6 @@ mod community_core {
             parameters_csv: String,
             caller_eoa: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            ink::env::debug_println!(
-                "########## contract_base:_execute_interface call 1: {:?}",
-                command
-            );
             let command_list = self._get_command_list();
             if command_list
                 .iter()
@@ -90,9 +86,6 @@ mod community_core {
                 .len()
                 == 0
             {
-                ink::env::debug_println!(
-                    "########## contract_base:_execute_interface CommnadNotFound"
-                );
                 return Err(ContractBaseError::CommnadNotFound);
             }
             let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
