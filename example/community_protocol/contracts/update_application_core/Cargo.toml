@@ -21,7 +21,7 @@ hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 [lib]
 name = "update_application_core"
 path = "src/lib.rs"
-crate-type = ["cdylib","rlib"]
+# crate-type = ["cdylib","rlib"]
 
 [features]
 default = ["std"]
