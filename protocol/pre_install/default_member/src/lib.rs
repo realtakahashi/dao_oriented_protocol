@@ -1,9 +1,9 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std,no_main)]
 
-#[openbrush::contract]
+#[ink::contract]
 mod default_member {
     // use communication_base::communication_base::CommunicationBaseRef;
-    use default_contract::DefaultContractRef;
+    use default_contract::default_contract::DefaultContractRef;
 
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
@@ -11,7 +11,7 @@ mod default_member {
     // use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
-    use openbrush::storage::Mapping;
+    use ink::storage::Mapping;
     use scale::{Decode, Encode};
 
     #[ink(storage)]
@@ -36,7 +36,7 @@ mod default_member {
         }
 
         #[ink(message)]
-        fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
             match target_function.as_str() {
                 "get_member_list" => {
@@ -56,96 +56,45 @@ mod default_member {
             result
         }
 
-        fn _set_application_core_address_impl(
-            &mut self,
-            application_core_address: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.application_core_address {
-                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => self.application_core_address = Some(application_core_address),
-            }
-            Ok(())
-        }
-
-        fn _get_command_list(&self) -> &Vec<String> {
-            &self.command_list
-        }
-
-        fn _function_calling_switch(
+        #[ink(message)]
+        fn extarnal_execute_interface(
             &mut self,
             command: String,
-            vec_of_parameters: Vec<String>,
-            caller_eoa: AccountId
+            parameters_csv: String,
+            caller_eoa: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            match command.as_str() {
-                "add_member" => self._add_member(vec_of_parameters, caller_eoa),
-                "delete_member" => self._delete_member(vec_of_parameters, caller_eoa),
-                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
-                "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
-                "change_election_commisioner" => self._change_election_commisioner(
-                    vec_of_parameters,
-                    caller_eoa
-                ),
-                "update_proposal_manager_address" => self._update_proposal_manager_address(
-                    vec_of_parameters,
-                    caller_eoa
-                ),
-                "set_proposal_manager_address" => self._set_proposal_manager_address(vec_of_parameters),
-                // "set_election_manager_address" => self._set_election_manager_address(vec_of_parameters),
-                _ => Err(ContractBaseError::CommnadNotFound),
+            ink::env::debug_println!(
+                "########## contract_base:_execute_interface call 1: {:?}",
+                command
+            );
+            let command_list = self._get_command_list();
+            if command_list
+                .iter()
+                .filter(|item| *item == &command)
+                .collect::<Vec<&String>>()
+                .len()
+                == 0
+            {
+                ink::env::debug_println!(
+                    "########## contract_base:_execute_interface CommnadNotFound"
+                );
+                return Err(ContractBaseError::CommnadNotFound);
             }
+            let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
+                Some(_index) => parameters_csv
+                    .split(&"$1$".to_string())
+                    .map(|col| col.to_string())
+                    .collect(),
+                None => {
+                    let mut rec: Vec<String> = Vec::new();
+                    rec.push(parameters_csv);
+                    rec
+                }
+            };
+            self._function_calling_switch(command, vec_of_parameters, caller_eoa)
+
         }
 
-        // fn _change_enable_or_not(
-        //     &mut self,
-        //     vec_of_parameters: Vec<String>,
-        // ) -> core::result::Result<(), ContractBaseError> {
-        //     match self.dao_address {
-        //         Some(value) => {
-        //             if !self._modifier_only_call_from_application_core(value) {
-        //                 return Err(ContractBaseError::InvalidCallingFromOrigin);
-        //             }
-        //         },
-        //         None => return Err(ContractBaseError::TheAddressNotFound),
-        //     };
-        //     match vec_of_parameters.len() {
-        //         1 => {
-        //             let proposal_id = match vec_of_parameters[0].parse::<u128>() {
-        //                 Ok(value) => value,
-        //                 Err(_) => return Err(ContractBaseError::ParameterInvalid),
-        //             };
-        //             let proposal_info = match self._get_proposal_info(proposal_id) {
-        //                 Ok(value) => value,
-        //                 Err(_) => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //             match self._valid_proposal_info_for_change_enabel_or_not(&proposal_info) {
-        //                 true => (),
-        //                 false => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //             let vec_of_params =
-        //                 common_logics::change_csv_string_to_vec_of_string(proposal_info.parameters);
-        //             match vec_of_params.len() {
-        //                 1 => match bool::from_str(&vec_of_params[0]) {
-        //                     Ok(value) => self.is_enable = value,
-        //                     Err(_) => {
-        //                         return Err(ContractBaseError::Custom(
-        //                             "Invalid Proposal.".to_string(),
-        //                         ))
-        //                     }
-        //                 },
-        //                 _ => {
-        //                     return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()))
-        //                 }
-        //             };
-        //         }
-        //         _ => return Err(ContractBaseError::ParameterInvalid),
-        //     }
-        //     Ok(())
-        // }
     }
 
     impl DefaultMember {
@@ -172,20 +121,11 @@ mod default_member {
         }
 
         #[ink(message)]
-        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
-
-        #[ink(message)]
-        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
-            self._execute_interface(command, parameters_csv, caller_eoa)
-        }
-
-        #[ink(message)]
         pub fn get_member_list(&self) -> Vec<MemberInfo> {
-            ink::env::debug_println!("########## default_member::get_member_list:[1] ");
+            ink::env::debug_println!("########## default_member::get_member_list:[1] self.next_member_id:{}", self.next_member_id);
             let mut result: Vec<MemberInfo> = Vec::new();
             for i in 0..self.next_member_id {
+                ink::env::debug_println!("########## default_member::get_member_list:[1] i:{}", i);
                 match self.member_list_with_id.get(&i) {
                     Some(value) => result.push(value),
                     None => (),
@@ -225,6 +165,77 @@ mod default_member {
         pub fn get_proposal_manager_address(&self) -> Option<AccountId> {
             self.proposal_manager_address
         }
+
+        fn _set_application_core_address_impl(
+            &mut self,
+            application_core_address: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.application_core_address {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => self.application_core_address = Some(application_core_address),
+            }
+            Ok(())
+        }
+
+        fn _get_command_list(&self) -> Vec<String> {
+            self.command_list.clone()
+        }
+
+        fn _function_calling_switch(
+            &mut self,
+            command: String,
+            vec_of_parameters: Vec<String>,
+            caller_eoa: AccountId
+        ) -> core::result::Result<(), ContractBaseError> {
+            match command.as_str() {
+                "add_member" => self._add_member(vec_of_parameters, caller_eoa),
+                "delete_member" => self._delete_member(vec_of_parameters, caller_eoa),
+                // "change_enable_or_not" => self._change_enable_or_not(vec_of_parameters),
+                "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
+                "change_election_commisioner" => self._change_election_commisioner(
+                    vec_of_parameters,
+                    caller_eoa
+                ),
+                "update_proposal_manager_address" => self._update_proposal_manager_address(
+                    vec_of_parameters,
+                    caller_eoa
+                ),
+                "set_proposal_manager_address" => self._set_proposal_manager_address(vec_of_parameters),
+                // "set_election_manager_address" => self._set_election_manager_address(vec_of_parameters),
+                _ => Err(ContractBaseError::CommnadNotFound),
+            }
+        }
+
+        fn _set_application_core_address(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.get_application_core_address() {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => match vec_of_parameters.len() {
+                    1 => {
+                        match common_logics::convert_hexstring_to_accountid(
+                            vec_of_parameters[0].clone(),
+                        ) {
+                            Some(value) => self._set_application_core_address_impl(value),
+                            None => return Err(ContractBaseError::ParameterInvalid),
+                        }
+                    }
+                    _ => return Err(ContractBaseError::ParameterInvalid),
+                },
+            }
+        }
+
+        fn _modifier_only_call_from_application_core(&self, caller: AccountId) -> bool {
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
+
+            match self.get_application_core_address() {
+                Some(value) => value == caller,
+                None => false,
+            }
+        }
+
 
         fn _update_proposal_manager_address(
             &mut self,
@@ -296,7 +307,7 @@ mod default_member {
             for address in address_list.iter() {
                 self.election_commisioner_list
                     .insert(&self.next_commisioner_id, address);
-                self.next_commisioner_id += 1;
+                self.next_commisioner_id = self.next_commisioner_id.saturating_add(1);
             }
 
             Ok(())
@@ -312,11 +323,11 @@ mod default_member {
             self.member_list_with_id
                 .insert(&self.next_member_id, &member_info);
             self.member_list_with_eoa.insert(&caller, &member_info);
-            self.next_member_id += 1;
+            self.next_member_id = self.next_member_id.saturating_add(1);
 
             self.election_commisioner_list
                 .insert(&self.next_commisioner_id, &caller);
-            self.next_commisioner_id += 1;
+            self.next_commisioner_id = self.next_commisioner_id.saturating_add(1);
         }
 
         fn _add_member(
@@ -366,7 +377,7 @@ mod default_member {
                 .insert(&self.next_member_id, &member_info);
             self.member_list_with_eoa
                 .insert(&member_address, &member_info);
-            self.next_member_id += 1;
+            self.next_member_id = self.next_member_id.saturating_add(1);
             ink::env::debug_println!("########## default_member:_add_member_impl [4]");
             Ok(())
         }

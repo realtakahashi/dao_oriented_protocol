@@ -1,12 +1,12 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 // const EVM_ID: u8 = 0x0F;
 
-#[openbrush::contract]
+#[ink::contract]
 // #[ink::contract(env = xvm_environment::XvmDefaultEnvironment)]
 mod dao_oriented_flipper {
     // use communication_base::communication_base::CommunicationBaseRef;
-    use default_contract::DefaultContractRef;
+    use default_contract::default_contract::DefaultContractRef;
 
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::{ElectionInfo, *};
@@ -14,7 +14,7 @@ mod dao_oriented_flipper {
     use core::str::FromStr;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
-    use openbrush::storage::Mapping;
+    use ink::storage::Mapping;
     use scale::{Decode, Encode};
     // use hex_literal::hex;
 
@@ -39,9 +39,94 @@ mod dao_oriented_flipper {
 
         /// get data interface
         #[ink(message)]
-        fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
             result
+        }
+
+        #[ink(message)]
+        fn extarnal_execute_interface(
+            &mut self,
+            command: String,
+            parameters_csv: String,
+            caller_eoa: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            ink::env::debug_println!(
+                "########## contract_base:_execute_interface call 1: {:?}",
+                command
+            );
+            let command_list = self._get_command_list();
+            if command_list
+                .iter()
+                .filter(|item| *item == &command)
+                .collect::<Vec<&String>>()
+                .len()
+                == 0
+            {
+                ink::env::debug_println!(
+                    "########## contract_base:_execute_interface CommnadNotFound"
+                );
+                return Err(ContractBaseError::CommnadNotFound);
+            }
+            let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
+                Some(_index) => parameters_csv
+                    .split(&"$1$".to_string())
+                    .map(|col| col.to_string())
+                    .collect(),
+                None => {
+                    let mut rec: Vec<String> = Vec::new();
+                    rec.push(parameters_csv);
+                    rec
+                }
+            };
+            self._function_calling_switch(command, vec_of_parameters, caller_eoa)
+
+        }
+
+    }
+
+    impl DaoOrientedFlipper {
+        #[ink(constructor)]
+        // pub fn new(evm_address: [u8; 20], communication_base_ref: AccountId ,member_manager_address: AccountId, proposal_manager_address:AccountId) -> Self {
+        // pub fn new(init_value: bool, communication_base_ref: AccountId ,member_manager_address: AccountId, proposal_manager_address:AccountId) -> Self {
+        pub fn new(init_value: bool,  proposal_manager_address:AccountId) -> Self {
+            Self {
+                // evm_address,
+                // communication_base_ref,
+                // member_manager_address,
+                proposal_manager_address,
+                command_list: [
+                    "dao_flip".to_string(),
+                    "set_application_core_address".to_string(),
+                    ].to_vec(),
+                application_core_address: None,
+                value: init_value,
+            }
+        }
+
+        #[ink(message)]
+        pub fn get(&self) -> bool {
+            self.value
+        }
+
+        fn _set_application_core_address(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.get_application_core_address() {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => match vec_of_parameters.len() {
+                    1 => {
+                        match common_logics::convert_hexstring_to_accountid(
+                            vec_of_parameters[0].clone(),
+                        ) {
+                            Some(value) => self._set_application_core_address_impl(value),
+                            None => return Err(ContractBaseError::ParameterInvalid),
+                        }
+                    }
+                    _ => return Err(ContractBaseError::ParameterInvalid),
+                },
+            }
         }
 
         fn _set_application_core_address_impl(
@@ -72,42 +157,6 @@ mod dao_oriented_flipper {
                 "set_application_core_address" => self._set_application_core_address(vec_of_parameters),
                 _ => Err(ContractBaseError::CommnadNotFound),
             }
-        }
-
-    }
-
-    impl DaoOrientedFlipper {
-        #[ink(constructor)]
-        // pub fn new(evm_address: [u8; 20], communication_base_ref: AccountId ,member_manager_address: AccountId, proposal_manager_address:AccountId) -> Self {
-        // pub fn new(init_value: bool, communication_base_ref: AccountId ,member_manager_address: AccountId, proposal_manager_address:AccountId) -> Self {
-        pub fn new(init_value: bool,  proposal_manager_address:AccountId) -> Self {
-            Self {
-                // evm_address,
-                // communication_base_ref,
-                // member_manager_address,
-                proposal_manager_address,
-                command_list: [
-                    "dao_flip".to_string(),
-                    "set_application_core_address".to_string(),
-                    ].to_vec(),
-                application_core_address: None,
-                value: init_value,
-            }
-        }
-
-        #[ink(message)]
-        pub fn extarnal_get_data_interface(&self,target_function:String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
-
-        #[ink(message)]
-        pub fn extarnal_execute_interface(&mut self, command:String, parameters_csv:String, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError>{
-            self._execute_interface(command, parameters_csv, caller_eoa)
-        }
-
-        #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
         }
 
         fn _dao_flip(&mut self, vec_of_parameters: Vec<String>, caller_eoa: AccountId) -> core::result::Result<(), ContractBaseError> {

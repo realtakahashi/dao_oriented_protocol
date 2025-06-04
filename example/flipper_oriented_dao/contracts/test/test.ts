@@ -1,16 +1,16 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { ContractPromise, CodePromise } from "@polkadot/api-contract";
-import proposalManagerContract from "./contract_json/defaultProposalContract.json";
+import proposalManagerContract from "./contract_json/default_proposal.contract.json";
 import proposalManagerAbi from "../../../../target/ink/default_proposal/default_proposal.json";
-import memberManagerContract from "./contract_json/defaultMemberContract.json";
+import memberManagerContract from "./contract_json/default_member.contract.json";
 import memberManagerAbi from "../../../../target/ink/default_member/default_member.json";
-import electionManagerContract from "./contract_json/defaultElectionContract.json";
+import electionManagerContract from "./contract_json/default_election.contract.json";
 import electionManagerAbi from "../../../../target/ink/default_election/default_election.json";
-import applicationCoreContract from "./contract_json/applicationCoreConatract.json";
+import applicationCoreContract from "./contract_json/application_core.contract.json";
 import applicationCoreAbi from "../../../../target/ink/application_core/application_core.json";
 import { BN } from "@polkadot/util";
 import assert from "assert";
-import flipperOrientedDaoContract from "./contract_json/flipperOrientedDaoContract.json";
+import flipperOrientedDaoContract from "./contract_json/dao_oriented_flipper.contract.json";
 import flipperOrientedDaoAbi from "../../../../target/ink/dao_oriented_flipper/dao_oriented_flipper.json";
 
 const storageDepositLimit = null;

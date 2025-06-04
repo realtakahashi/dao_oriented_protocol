@@ -5,13 +5,12 @@ authors = ["shin.takahashi"]
 edition = "2021"
 
 [dependencies]
-ink = { version = "4.0.0-rc", default-features = false }
+ink = { version = "5.1.0", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
 # add own
-openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = ["access_control", "ownable"] }
 contract_helper = { path = "../../../../protocol/logics", default-features = false }
 
 # communication_base = { version = "0.1.0", path = "../communication_base", default-features = false, features = ["ink-as-dependency"] }
@@ -22,7 +21,7 @@ hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 [lib]
 name = "update_application_core"
 path = "src/lib.rs"
-crate-type = ["cdylib","rlib"]
+# crate-type = ["cdylib","rlib"]
 
 [features]
 default = ["std"]
@@ -30,7 +29,6 @@ std = [
     "ink/std",
     "scale/std",
     "scale-info/std",
-    "openbrush/std",
     "contract_helper/std",
 #    "communication_base/std",
     "default_contract/std",

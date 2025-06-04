@@ -1,0 +1,20 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@polkadot/api": "^15.9.1",
+    "@polkadot/api-contract": "^15.9.1",
+    "@polkadot/keyring": "^13.4.3",
+    "@polkadot/util-crypto": "^13.4.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

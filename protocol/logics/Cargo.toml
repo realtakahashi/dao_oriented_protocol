@@ -5,7 +5,7 @@ authors = ["Shin.Takahashi"]
 edition = "2021"
 
 [dependencies]
-ink = { version = "4.0.0-rc", default-features = false }
+ink = { version = "5.1.0", default-features = false }
 
 # ink_primitives = { version = "3.4.0", default-features = false }
 # ink_metadata = { version = "3.4.0", default-features = false, features = ["derive"], optional = true }
@@ -14,11 +14,10 @@ ink = { version = "4.0.0-rc", default-features = false }
 # ink_lang = { version = "3.4.0", default-features = false }
 # ink_prelude = { version = "4.0.0-rc", default-features = false }
 
-scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
-scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
+scale = { package = "parity-scale-codec", version = "3.7.4", default-features = false, features = ["derive"] }
+scale-info = { version = "2.11.5", default-features = false, features = ["derive"], optional = true }
 
-openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = ["psp22", "ownable", "reentrancy_guard"] }
-bs58 = { version = "0.4.0", default-features = false }
+bs58 = { version = "0.5.1", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 # communication_base = { version = "0.1.0", path = "../communication_base", default-features = false, features = ["ink-as-dependency"] }
 
@@ -39,7 +38,6 @@ std = [
     "scale/std",
     "scale-info",
     "scale-info/std",
-    "openbrush/std",
     "bs58/std",
     "hex/std",
 ]

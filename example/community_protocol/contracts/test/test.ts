@@ -490,7 +490,7 @@ const checkCommunityTokenBalance = async (targetBalance:number, targetAddress:st
     communityTokenAbi,
     communityTokenAddress,
   );
-  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+  const { gasConsumed, result, output } = await contract.query.balanceOf (
     deployer.address,
     {
       value: 0,
@@ -519,7 +519,7 @@ const checkSubCommunityTokenBalance = async (targetBalance:number, targetAddress
     communitySubTokenAbi,
     communitySubTokenAddress,
   );
-  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+  const { gasConsumed, result, output } = await contract.query.balanceOf (
     deployer.address,
     {
       value: 0,
@@ -804,7 +804,7 @@ const checkUpdatePreInstallSoftware =async (applicaitonCoreAddress:string) => {
 const transferNativeToken = async (callBack:()=>void) => {
   console.log("transferNativeToken start");
   // transfer tokens
-  const transfer = api.tx.balances.transfer(communityListManagerContractAddress, 12345);
+  const transfer = api.tx.balances.transferAllowDeath(communityListManagerContractAddress, 12345);
   //@ts-ignore
   const unsub = await transfer.signAndSend(deployer, ({ events = [], status }) => {
     if (status.isFinalized) {
@@ -1693,11 +1693,12 @@ export const getGasLimitForNotDeploy = (api: any): any => {
 export const executeAllTest = async () => {
   console.log("Start executeAllTest");
   
-  // const wsProvider = new WsProvider("ws://127.0.0.1:9944");
-  const wsProvider = new WsProvider("wss://rpc.shibuya.astar.network");
+  const wsProvider = new WsProvider("ws://127.0.0.1:9944");
+  //const wsProvider = new WsProvider("wss://rpc.shibuya.astar.network");
   api = await ApiPromise.create({ provider: wsProvider });
   keyring = new Keyring({ type: "sr25519" });
-  deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
+//  deployer = keyring.addFromUri("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a");
+  deployer = keyring.addFromUri("//Alice");
 
   await community_list_manager_test();
   // await deploy_and_create_community_list_manager()

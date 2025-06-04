@@ -498,7 +498,7 @@ const checkCommunityTokenBalance = async (targetBalance:number, targetAddress:st
     communityTokenAbi,
     communityTokenAddress,
   );
-  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+  const { gasConsumed, result, output } = await contract.query.balanceOf (
     deployer.address,
     {
       value: 0,
@@ -527,7 +527,7 @@ const checkSubCommunityTokenBalance = async (targetBalance:number, targetAddress
     communitySubTokenAbi,
     communitySubTokenAddress,
   );
-  const { gasConsumed, result, output } = await contract.query['psp22::balanceOf'] (
+  const { gasConsumed, result, output } = await contract.query.balanceOf (
     deployer.address,
     {
       value: 0,

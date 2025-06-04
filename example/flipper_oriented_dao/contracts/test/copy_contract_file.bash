@@ -1,0 +1,6 @@
+#!/bin/bash
+cp -p /Users/shin.takahashi/develop/ink/dao_oriented_protocol/target/ink/dao_oriented_flipper/dao_oriented_flipper.contract /Users/shin.takahashi/develop/ink/dao_oriented_protocol/example/flipper_oriented_dao/contracts/test/contract_json/dao_oriented_flipper.contract.json
+cp -p /Users/shin.takahashi/develop/ink/dao_oriented_protocol/target/ink/default_proposal/default_proposal.contract /Users/shin.takahashi/develop/ink/dao_oriented_protocol/example/flipper_oriented_dao/contracts/test/contract_json/default_proposal.contract.json
+cp -p /Users/shin.takahashi/develop/ink/dao_oriented_protocol/target/ink/default_member/default_member.contract /Users/shin.takahashi/develop/ink/dao_oriented_protocol/example/flipper_oriented_dao/contracts/test/contract_json/default_member.contract.json
+cp -p /Users/shin.takahashi/develop/ink/dao_oriented_protocol/target/ink/default_election/default_election.contract /Users/shin.takahashi/develop/ink/dao_oriented_protocol/example/flipper_oriented_dao/contracts/test/contract_json/default_election.contract.json
+cp -p /Users/shin.takahashi/develop/ink/dao_oriented_protocol/target/ink/application_core/application_core.contract /Users/shin.takahashi/develop/ink/dao_oriented_protocol/example/flipper_oriented_dao/contracts/test/contract_json/application_core.contract.json

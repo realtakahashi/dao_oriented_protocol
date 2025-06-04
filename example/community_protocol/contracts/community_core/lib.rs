@@ -1,19 +1,19 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std, no_main)]
 
-#[openbrush::contract]
+#[ink::contract]
 mod community_core {
+    use community_types::types::RewardInfo;
     use contract_helper::common::common_logics::{self, ContractBaseError};
     use contract_helper::traits::contract_base::contract_base::*;
     use contract_helper::traits::types::types::*;
     use core::str::FromStr;
-    use default_contract::DefaultContractRef;
+    use default_contract::default_contract::DefaultContractRef;
     use ink::prelude::borrow::ToOwned;
     use ink::prelude::string::{String, ToString};
     use ink::prelude::vec::Vec;
     use ink::storage::traits::StorageLayout;
-    use openbrush::{storage::Mapping, traits::Storage};
+    use ink::storage::Mapping;
     use scale::Decode;
-    use community_types::types::RewardInfo;
 
     #[derive(Default, Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
     #[cfg_attr(feature = "std", derive(StorageLayout, scale_info::TypeInfo))]
@@ -22,7 +22,7 @@ mod community_core {
         constract_address: Option<AccountId>,
         contents: String,
         sub_token_contract_address: Option<AccountId>,
-        application_core_contract_address: Option<AccountId>
+        application_core_contract_address: Option<AccountId>,
     }
 
     // #[derive(Debug, Clone, scale::Encode, scale::Decode, PartialEq)]
@@ -42,7 +42,7 @@ mod community_core {
     }
 
     #[ink(storage)]
-    #[derive(Default, Storage)]
+    #[derive(Default)]
     pub struct CommunityCore {
         application_core_address: Option<AccountId>,
         community_list_manager_address: Option<AccountId>,
@@ -66,54 +66,40 @@ mod community_core {
 
         /// get data interface
         #[ink(message)]
-        fn get_data(&self, target_function: String) -> Vec<Vec<u8>> {
+        fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
             let mut result: Vec<Vec<u8>> = Vec::new();
             result
         }
 
-        fn _set_application_core_address_impl(
-            &mut self,
-            application_core_address: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            match self.application_core_address {
-                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
-                None => {
-                    self.application_core_address = Some(application_core_address);
-                    self.community_info.application_core_contract_address = Some(application_core_address);
-                }
-            }
-            Ok(())
-        }
-
-        /// [private] get command list
-        fn _get_command_list(&self) -> &Vec<String> {
-            &self.command_list
-        }
-
-        /// [private] switch of call function
-        fn _function_calling_switch(
+        #[ink(message)]
+        fn extarnal_execute_interface(
             &mut self,
             command: String,
-            vec_of_parameters: Vec<String>,
+            parameters_csv: String,
             caller_eoa: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
-            match command.as_str() {
-                "set_application_core_address" => {
-                    self._set_application_core_address(vec_of_parameters)
-                }
-                "submit_contribution" => self._submit_contribution(vec_of_parameters, caller_eoa),
-                "check_contribution" => self._check_contribution(vec_of_parameters),
-                "propose_adding_community_list" => {
-                    self._propose_adding_community_list(vec_of_parameters)
-                }
-                "rewards_by_native_token" => {
-                    self._rewards_by_native_token(vec_of_parameters)
-                }
-                "set_manager_addresses" => {
-                    self._set_manager_addresses(vec_of_parameters)
-                }
-                _ => Err(ContractBaseError::CommnadNotFound),
+            let command_list = self._get_command_list();
+            if command_list
+                .iter()
+                .filter(|item| *item == &command)
+                .collect::<Vec<&String>>()
+                .len()
+                == 0
+            {
+                return Err(ContractBaseError::CommnadNotFound);
             }
+            let vec_of_parameters: Vec<String> = match parameters_csv.find(&"$1$".to_string()) {
+                Some(_index) => parameters_csv
+                    .split(&"$1$".to_string())
+                    .map(|col| col.to_string())
+                    .collect(),
+                None => {
+                    let mut rec: Vec<String> = Vec::new();
+                    rec.push(parameters_csv);
+                    rec
+                }
+            };
+            self._function_calling_switch(command, vec_of_parameters, caller_eoa)
         }
     }
 
@@ -157,7 +143,9 @@ mod community_core {
             instance
                 .command_list
                 .push("rewards_by_native_token".to_string());
-            instance.command_list.push("set_manager_addresses".to_string());
+            instance
+                .command_list
+                .push("set_manager_addresses".to_string());
             // instance
             //     .command_list
             //     .push("rewards_by_community_token".to_string());
@@ -178,17 +166,8 @@ mod community_core {
 
         #[ink(message)]
         pub fn extarnal_get_data_interface(&self, target_function: String) -> Vec<Vec<u8>> {
-            self.get_data(target_function)
-        }
-
-        #[ink(message)]
-        pub fn extarnal_execute_interface(
-            &mut self,
-            command: String,
-            parameters_csv: String,
-            caller_eoa: AccountId,
-        ) -> core::result::Result<(), ContractBaseError> {
-            self._execute_interface(command, parameters_csv, caller_eoa)
+            let mut result: Vec<Vec<u8>> = Vec::new();
+            result
         }
 
         #[ink(message)]
@@ -223,10 +202,81 @@ mod community_core {
             self.community_list_manager_address
         }
 
-        
+        fn _modifier_only_call_from_application_core(&self, caller: AccountId) -> bool {
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core get_application_core_address:{:?}",self.get_application_core_address());
+            // ink::env::debug_println!("########## contract_base:_modifier_only_call_from_application_core caller:{:?}",caller);
+
+            match self.get_application_core_address() {
+                Some(value) => value == caller,
+                None => false,
+            }
+        }
+
+        fn _set_application_core_address_impl(
+            &mut self,
+            application_core_address: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.application_core_address {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => {
+                    self.application_core_address = Some(application_core_address);
+                    self.community_info.application_core_contract_address =
+                        Some(application_core_address);
+                }
+            }
+            Ok(())
+        }
+
+        /// [private] switch of call function
+        fn _function_calling_switch(
+            &mut self,
+            command: String,
+            vec_of_parameters: Vec<String>,
+            caller_eoa: AccountId,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match command.as_str() {
+                "set_application_core_address" => {
+                    self._set_application_core_address(vec_of_parameters)
+                }
+                "submit_contribution" => self._submit_contribution(vec_of_parameters, caller_eoa),
+                "check_contribution" => self._check_contribution(vec_of_parameters),
+                "propose_adding_community_list" => {
+                    self._propose_adding_community_list(vec_of_parameters)
+                }
+                "rewards_by_native_token" => self._rewards_by_native_token(vec_of_parameters),
+                "set_manager_addresses" => self._set_manager_addresses(vec_of_parameters),
+                _ => Err(ContractBaseError::CommnadNotFound),
+            }
+        }
+
+        /// [private] get command list
+        fn _get_command_list(&self) -> &Vec<String> {
+            &self.command_list
+        }
+
+        fn _set_application_core_address(
+            &mut self,
+            vec_of_parameters: Vec<String>,
+        ) -> core::result::Result<(), ContractBaseError> {
+            match self.get_application_core_address() {
+                Some(_value) => return Err(ContractBaseError::SetTheAddressOnlyOnece),
+                None => match vec_of_parameters.len() {
+                    1 => {
+                        match common_logics::convert_hexstring_to_accountid(
+                            vec_of_parameters[0].clone(),
+                        ) {
+                            Some(value) => self._set_application_core_address_impl(value),
+                            None => return Err(ContractBaseError::ParameterInvalid),
+                        }
+                    }
+                    _ => return Err(ContractBaseError::ParameterInvalid),
+                },
+            }
+        }
+
         fn _set_manager_addresses(
             &mut self,
-            vec_of_parameters: Vec<String>
+            vec_of_parameters: Vec<String>,
         ) -> core::result::Result<(), ContractBaseError> {
             if self._modifier_only_call_from_application_core(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
@@ -235,23 +285,26 @@ mod community_core {
                 return Err(ContractBaseError::ParameterInvalid);
             }
 
-            let update_member_manager_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[0].clone()){
-                Some(value) => value,
-                None => return Err(ContractBaseError::ParameterInvalid),
-            };
-            let proposal_manager_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[1].clone()){
-                Some(value) => value,
-                None => return Err(ContractBaseError::ParameterInvalid),
-            };
-            let community_list_manager_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[2].clone()){
-                Some(value) => value,
-                None => return Err(ContractBaseError::ParameterInvalid),
-            };
-            let community_sub_token_address = match common_logics::convert_hexstring_to_accountid(vec_of_parameters[3].clone()){
-                Some(value) => value,
-                None => return Err(ContractBaseError::ParameterInvalid),
-            };
-
+            let update_member_manager_address =
+                match common_logics::convert_hexstring_to_accountid(vec_of_parameters[0].clone()) {
+                    Some(value) => value,
+                    None => return Err(ContractBaseError::ParameterInvalid),
+                };
+            let proposal_manager_address =
+                match common_logics::convert_hexstring_to_accountid(vec_of_parameters[1].clone()) {
+                    Some(value) => value,
+                    None => return Err(ContractBaseError::ParameterInvalid),
+                };
+            let community_list_manager_address =
+                match common_logics::convert_hexstring_to_accountid(vec_of_parameters[2].clone()) {
+                    Some(value) => value,
+                    None => return Err(ContractBaseError::ParameterInvalid),
+                };
+            let community_sub_token_address =
+                match common_logics::convert_hexstring_to_accountid(vec_of_parameters[3].clone()) {
+                    Some(value) => value,
+                    None => return Err(ContractBaseError::ParameterInvalid),
+                };
 
             self.member_manager_address = Some(update_member_manager_address);
             self.proposal_manager_address = Some(proposal_manager_address);
@@ -281,7 +334,7 @@ mod community_core {
             };
             self.contribution_list
                 .insert(&self.next_contribution_id, &contribution_info);
-            self.next_contribution_id += 1;
+            self.next_contribution_id = self.next_contribution_id.saturating_add(1);
             Ok(())
         }
 
@@ -292,7 +345,7 @@ mod community_core {
             if self._modifier_only_call_from_application_core(self.env().caller()) == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
-            let check_limit = self.checked_blocktime + self.check_interval_of_blocktime;
+            let check_limit = self.checked_blocktime.saturating_add(self.check_interval_of_blocktime);
             if self.env().block_number() < check_limit {
                 return Err(ContractBaseError::Custom("CheckTimingIsEarly.".to_string()));
             }
@@ -313,7 +366,7 @@ mod community_core {
                 contribution_people.push(contribution_info.contributor);
                 self.checked_blocktime = contribution_info.blocktime;
             }
-            self.checked_contribution_id = Some(self.next_contribution_id - 1);
+            self.checked_contribution_id = Some(self.next_contribution_id.saturating_sub(1));
             match self._delete_member(contribution_people.clone()) {
                 Ok(()) => (),
                 Err(error) => return Err(error),
@@ -396,32 +449,55 @@ mod community_core {
             &mut self,
             _vec_of_parameters: Vec<String>,
         ) -> core::result::Result<(), ContractBaseError> {
-            ink::env::debug_println!("########## community_core:_propose_adding_community_list call 1"); 
+            ink::env::debug_println!(
+                "########## community_core:_propose_adding_community_list call 1"
+            );
             if self._modifier_only_call_from_application_core(self.env().caller()) == false {
-                ink::env::debug_println!("########## community_core:_propose_adding_community_list InvalidCallingFromOrigin");    
+                ink::env::debug_println!("########## community_core:_propose_adding_community_list InvalidCallingFromOrigin");
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
-            let parameter = self.community_info.name.as_str().to_owned()
-                + "$1$" + &hex::encode(self.env().account_id())
-                + "$1$" + &self.community_info.contents
-                + "$1$" + &hex::encode(self.community_info.sub_token_contract_address.unwrap())
-                + "$1$" + &hex::encode(self.community_info.application_core_contract_address.unwrap());
-            let mut instance: DefaultContractRef =
-                ink::env::call::FromAccountId::from_account_id(
-                    self.community_list_manager_address.unwrap(),
-                );
-            ink::env::debug_println!("########## community_core:_propose_adding_community_list call 2"); 
+
+            let mut params = String::new();
+            params.push_str(self.community_info.name.as_str());
+            params.push_str("$1$");
+            params.push_str(&hex::encode(self.env().account_id()));
+            params.push_str("$1$");
+            params.push_str(&self.community_info.contents);
+            params.push_str("$1$");
+            params.push_str(&hex::encode(self.community_info.sub_token_contract_address.unwrap()));
+            params.push_str("$1$");
+            params.push_str(&hex::encode(self.community_info.application_core_contract_address.unwrap()));
+
+            // let parameter = self.community_info.name.as_str().to_owned()
+            //     + "$1$"
+            //     + &hex::encode(self.env().account_id())
+            //     + "$1$"
+            //     + &self.community_info.contents
+            //     + "$1$"
+            //     + &hex::encode(self.community_info.sub_token_contract_address.unwrap())
+            //     + "$1$"
+            //     + &hex::encode(
+            //         self.community_info
+            //             .application_core_contract_address
+            //             .unwrap(),
+            //     );
+            let mut instance: DefaultContractRef = ink::env::call::FromAccountId::from_account_id(
+                self.community_list_manager_address.unwrap(),
+            );
+            ink::env::debug_println!(
+                "########## community_core:_propose_adding_community_list call 2"
+            );
             match instance.extarnal_execute_interface(
                 "add2request_list".to_string(),
-                parameter,
+                params,
                 self.env().caller(),
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    ink::env::debug_println!("########## community_core:_propose_adding_community_list add2request_list_calling_error: {:?}",e);    
+                    ink::env::debug_println!("########## community_core:_propose_adding_community_list add2request_list_calling_error: {:?}",e);
                     return Err(ContractBaseError::Custom(
                         "add2request_list_calling_error".to_string(),
-                    ))
+                    ));
                 }
             }
             Ok(())
@@ -462,15 +538,11 @@ mod community_core {
                 Err(error) => return Err(error),
             };
             for reward_info in reward_list {
-                if self._check_vaild_transfer_eoa(member_list.clone(), reward_info.address)
-                    == false
+                if self._check_vaild_transfer_eoa(member_list.clone(), reward_info.address) == false
                 {
                     return Err(ContractBaseError::Custom("TheyIsNotAMember".to_string()));
                 }
-                match self
-                    .env()
-                    .transfer(reward_info.address, reward_info.amount)
-                {
+                match self.env().transfer(reward_info.address, reward_info.amount) {
                     Ok(()) => (),
                     Err(_e) => {
                         return Err(ContractBaseError::Custom(

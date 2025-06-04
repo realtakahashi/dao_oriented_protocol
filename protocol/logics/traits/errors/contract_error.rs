@@ -1,7 +1,9 @@
 use ink::prelude::string::String;
 
-#[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+// #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+#[derive(Debug, PartialEq, Eq)]
+#[ink::scale_derive(Encode, Decode, TypeInfo)]
+#[allow(clippy::cast_possible_truncation)]
 pub enum ContractBaseError {
     CommnadNotFound,
     ParameterInvalid,
