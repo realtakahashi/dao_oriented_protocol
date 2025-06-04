@@ -245,7 +245,7 @@ export const getCommunitySubTokenBalance = async (
   const gasLimit: any = getGasLimitForNotDeploy(api);
 
   console.log("## getCommunitySubTokenBalance:targetAddress",targetAddress);
-  const { output } = await contract.query['psp22::balanceOf'](
+  const { output } = await contract.query.balanceOf(
     peformanceAddress, 
     {
       value: 0,
@@ -274,7 +274,7 @@ export const getCommunityTokenBalance = async (
   const gasLimit: any = getGasLimitForNotDeploy(api);
 
   console.log("## getCommunityTokenBalance:targetAddress",targetAddress);
-  const { output } = await contract.query['psp22::balanceOf'](
+  const { output } = await contract.query.balanceOf(
     peformanceAddress, 
     {
       value: 0,

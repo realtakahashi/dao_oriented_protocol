@@ -123,7 +123,7 @@ mod update_application_core {
                 contract_address: self.pre_install_member_manager,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id.saturating_add(1);
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             ink::env::debug_println!("########## application_core:configure_pre_install_member_manager [2] ###############");
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_member_manager, self.env().account_id()){
                 Ok(()) => (),
@@ -144,7 +144,7 @@ mod update_application_core {
                 contract_address: self.pre_install_proposal_manager,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id.saturating_add(1);
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_proposal_manager, self.env().account_id()) {
                 Ok(()) => (),
                 Err(error) => return Err(error),
@@ -167,7 +167,7 @@ mod update_application_core {
                 contract_address: self.pre_install_election,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id.saturating_add(1);
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_election, self.env().account_id()){
                 Ok(()) => (),
                 Err(error) => return Err(error),
@@ -190,7 +190,7 @@ mod update_application_core {
                 contract_address: self.pre_install_community_core,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id.saturating_add(1);
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
 
             match self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_community_core, self.env().account_id()){
                 Ok(()) => (),
@@ -233,7 +233,7 @@ mod update_application_core {
                 contract_address: self.pre_install_community_sub_token,
             };
             self.pre_installed_software_list_with_id.insert(&self.next_pre_software_id, &software_info);
-            self.next_pre_software_id.saturating_add(1);
+            self.next_pre_software_id = self.next_pre_software_id.saturating_add(1);
 
             self._set_address_for_pre_install_contract("set_application_core_address".to_string(), self.pre_install_community_sub_token, self.env().account_id())
         }
@@ -462,7 +462,7 @@ mod update_application_core {
                         Err(error) => return Err(error),
                     }
                     // todo: update proposal status Executed -> Finished
-                    self.next_software_id.saturating_add(1);
+                    self.next_software_id = self.next_software_id.saturating_add(1);
                     ink::env::debug_println!("########## application_core:install_software [5] ");
                     Ok(())
                 }

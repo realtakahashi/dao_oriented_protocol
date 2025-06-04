@@ -122,9 +122,10 @@ mod default_member {
 
         #[ink(message)]
         pub fn get_member_list(&self) -> Vec<MemberInfo> {
-            ink::env::debug_println!("########## default_member::get_member_list:[1] ");
+            ink::env::debug_println!("########## default_member::get_member_list:[1] self.next_member_id:{}", self.next_member_id);
             let mut result: Vec<MemberInfo> = Vec::new();
             for i in 0..self.next_member_id {
+                ink::env::debug_println!("########## default_member::get_member_list:[1] i:{}", i);
                 match self.member_list_with_id.get(&i) {
                     Some(value) => result.push(value),
                     None => (),

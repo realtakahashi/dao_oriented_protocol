@@ -171,7 +171,7 @@ mod update_member_manager {
 
         #[ink(message)]
         pub fn get_member_list(&self) -> Vec<MemberInfo> {
-            ink::env::debug_println!("########## default_member::get_member_list:[1] ");
+            ink::env::debug_println!("########## update_member::get_member_list:[1] ");
             let mut result: Vec<MemberInfo> = Vec::new();
             for i in 0..self.next_member_id {
                 match self.member_list_with_id.get(&i) {
@@ -358,7 +358,7 @@ mod update_member_manager {
             for address in address_list.iter() {
                 self.election_commisioner_list
                     .insert(&self.next_commisioner_id, address);
-                self.next_commisioner_id.saturating_add(1);
+                self.next_commisioner_id = self.next_commisioner_id.saturating_add(1);
             }
 
             Ok(())
@@ -374,11 +374,11 @@ mod update_member_manager {
             self.member_list_with_id
                 .insert(&self.next_member_id, &member_info);
             self.member_list_with_eoa.insert(&caller, &member_info);
-            self.next_member_id.saturating_add(1);
+            self.next_member_id = self.next_member_id.saturating_add(1);
 
             self.election_commisioner_list
                 .insert(&self.next_commisioner_id, &caller);
-            self.next_commisioner_id.saturating_add(1);
+            self.next_commisioner_id = self.next_commisioner_id.saturating_add(1);
         }
 
         fn _add_member(
@@ -387,17 +387,17 @@ mod update_member_manager {
             caller_eoa: AccountId,
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!(
-                "########## default_member:_add_member [1]:vec_of_parameters:{:?} ",
+                "########## update_member:_add_member [1]:vec_of_parameters:{:?} ",
                 vec_of_parameters
             );
             if self._modifier_only_call_from_proposal() == false {
                 return Err(ContractBaseError::InvalidCallingFromOrigin);
             }
-            ink::env::debug_println!("########## default_member:_add_member [2]");
+            ink::env::debug_println!("########## update_member:_add_member [2]");
             if self._modifier_only_call_from_member_eoa(caller_eoa) == false {
                 return Err(ContractBaseError::Custom("Only Member does.".to_string()));
             }
-            ink::env::debug_println!("########## default_member:_add_member [3]");
+            ink::env::debug_println!("########## update_member:_add_member [3]");
             match self.application_core_address {
                 Some(_value) => self._add_member_impl(vec_of_parameters),
                 None => return Err(ContractBaseError::TheAddressNotFound),
@@ -411,13 +411,13 @@ mod update_member_manager {
             vec_of_parameters: Vec<String>,
         ) -> core::result::Result<(), ContractBaseError> {
             ink::env::debug_println!(
-                "########## default_member:_add_member_impl [1]: vec_of_parameters:{:?}",
+                "########## update_member:_add_member_impl [1]: vec_of_parameters:{:?}",
                 vec_of_parameters
             );
             if vec_of_parameters.len() != 2 {
                 return Err(ContractBaseError::Custom("Invalid Proposal.".to_string()));
             }
-            ink::env::debug_println!("########## default_member:_add_member_impl [3]");
+            ink::env::debug_println!("########## update_member:_add_member_impl [3]");
             let member_address =
                 match common_logics::convert_string_to_accountid(&vec_of_parameters[1]) {
                     Some(value) => value,
@@ -432,8 +432,8 @@ mod update_member_manager {
                 .insert(&self.next_member_id, &member_info);
             self.member_list_with_eoa
                 .insert(&member_address, &member_info);
-            self.next_member_id.saturating_add(1);
-            ink::env::debug_println!("########## default_member:_add_member_impl [4]");
+            self.next_member_id = self.next_member_id.saturating_add(1);
+            ink::env::debug_println!("########## update_member:_add_member_impl [4]");
             Ok(())
         }
 

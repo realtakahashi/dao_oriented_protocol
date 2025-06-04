@@ -242,7 +242,7 @@ mod community_list_manager {
                 application_core_contract_address:Some(applicaiton_core_address),
             };
             self.request_list4adding_list.insert(&self.next_request_id, &community_info);
-            self.next_request_id.saturating_add(1);
+            self.next_request_id = self.next_request_id.saturating_add(1);
             ink::env::debug_println!("########## community_list_manager:_add2request_list Call 3");
             Ok(())
         }
@@ -267,7 +267,7 @@ mod community_list_manager {
                 None => return Err(ContractBaseError::ParameterInvalid),
             };
             self.community_list_with_id.insert(&self.next_community_id, &community_info);
-            self.next_community_id.saturating_add(1);
+            self.next_community_id = self.next_community_id.saturating_add(1);
             self.community_list_with_address.insert(&community_info.contract_address.unwrap(), &community_info);
             self.request_list4adding_list.remove(&request_id);
             ink::env::debug_println!("########## community_list_manager:_add_community Call 5 : community_info: {:?}", community_info);

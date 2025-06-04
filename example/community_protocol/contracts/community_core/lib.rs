@@ -334,7 +334,7 @@ mod community_core {
             };
             self.contribution_list
                 .insert(&self.next_contribution_id, &contribution_info);
-            self.next_contribution_id.saturating_add(1);
+            self.next_contribution_id = self.next_contribution_id.saturating_add(1);
             Ok(())
         }
 

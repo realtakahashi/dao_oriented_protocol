@@ -452,7 +452,7 @@ mod community_token {
                     Ok(()) => {
                         self.reward_sub_token_list
                             .insert(&reward_info.address, &self.next_reward_sub_token_id);
-                        self.next_reward_sub_token_id.saturating_add(1);
+                        self.next_reward_sub_token_id = self.next_reward_sub_token_id.saturating_add(1);
                     }
                     Err(_e) => {
                         return Err(ContractBaseError::Custom("BurnFromIsFailure.".to_string()))
